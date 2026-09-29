@@ -215,10 +215,8 @@ function heroScene() {
     cy = (cr.top - r.top + cr.height / 2) * dpr;
     R = Math.max(cr.width, cr.height) * 0.62 * dpr;
     cy -= 14 * dpr;
+    if (reduced) draw(0); // resized buffer was just cleared — repaint the static frame
   };
-  resize();
-  window.addEventListener('resize', resize);
-  setTimeout(resize, 400); // once fonts/card settle
 
   // Pointer parallax targets (eased per frame).
   let tx = 0, ty = 0, rx = 0, ry = 0;
@@ -291,6 +289,9 @@ function heroScene() {
     }
   };
 
+  resize();
+  window.addEventListener('resize', resize);
+  setTimeout(resize, 400); // once fonts/card settle
   if (reduced) { draw(0); return; }
   const loop = (t) => { draw(t); requestAnimationFrame(loop); };
   requestAnimationFrame(loop);
