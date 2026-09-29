@@ -33,6 +33,7 @@ export function pageLanding(catalog) {
 
   return `
   <section class="hero">
+    <canvas class="hero-canvas" aria-hidden="true"></canvas>
     <div class="hero-deco" aria-hidden="true">
       <span class="deco deco-ring"></span>
       <span class="deco deco-spark d1">${icon('spark', 18)}</span>
@@ -99,7 +100,7 @@ export function pageLanding(catalog) {
       <div class="section-head">
         <div class="eyebrow">The library</div>
         <h2 class="display">Pick a subject. Go deep.</h2>
-        <p class="sub">${catalog.totals?.courses || ''} courses · ${catalog.totals?.lessons || ''} lessons · every one free</p>
+        <p class="sub"><b class="count" data-n="${catalog.totals?.courses || 0}">${catalog.totals?.courses || 0}</b> courses · <b class="count" data-n="${catalog.totals?.lessons || 0}">${catalog.totals?.lessons || 0}</b> lessons · every one free</p>
       </div>
       <div class="grid grid-3">${subjectCards}</div>
     </div>
@@ -159,6 +160,140 @@ export function wireLanding(catalog) {
   }, { threshold: 0.12 });
   document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
   setTimeout(() => document.querySelectorAll('.reveal:not(.in)').forEach((el) => el.classList.add('in')), 1600);
+  heroScene();
+  countUp();
+}
+
+// Animated counts for the library totals.
+function countUp() {
+  const els = document.querySelectorAll('.count[data-n]');
+  if (!els.length) return;
+  const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  els.forEach((el) => {
+    const n = Number(el.dataset.n) || 0;
+    if (reduced || !n) { el.textContent = n; return; }
+    const t0 = performance.now(), dur = 1100;
+    const tick = (t) => {
+      const p = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(n * e);
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+}
+
+// The hero's signature piece: a wireframe trefoil (torus) knot — a real
+// parametric curve — projected in 3D on a 2D canvas, drifting slowly and
+// leaning toward the pointer. No library, theme-aware, motion-safe.
+function heroScene() {
+  const canvas = document.querySelector('.hero-canvas');
+  const card = document.querySelector('.try-card');
+  const hero = document.querySelector('.hero');
+  if (!canvas || !card || !hero) return;
+  const ctx = canvas.getContext('2d');
+  const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+  // Unit trefoil knot, precomputed once.
+  const N = 320, pts = [];
+  let max = 0;
+  for (let i = 0; i < N; i++) {
+    const t = (i / N) * Math.PI * 2, r = 2 + Math.cos(3 * t);
+    const p = [r * Math.cos(2 * t), r * Math.sin(2 * t), Math.sin(3 * t) * 1.7];
+    max = Math.max(max, Math.abs(p[0]), Math.abs(p[1]), Math.abs(p[2]));
+    pts.push(p);
+  }
+  pts.forEach((p) => { p[0] /= max; p[1] /= max; p[2] /= max; });
+
+  let W = 0, H = 0, dpr = 1, cx = 0, cy = 0, R = 0;
+  const resize = () => {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const r = hero.getBoundingClientRect();
+    W = Math.round(r.width * dpr); H = Math.round(r.height * dpr);
+    canvas.width = W; canvas.height = H;
+    const cr = card.getBoundingClientRect();
+    cx = (cr.left - r.left + cr.width / 2) * dpr;
+    cy = (cr.top - r.top + cr.height / 2) * dpr;
+    R = Math.max(cr.width, cr.height) * 0.62 * dpr;
+    cy -= 14 * dpr;
+  };
+  resize();
+  window.addEventListener('resize', resize);
+  setTimeout(resize, 400); // once fonts/card settle
+
+  // Pointer parallax targets (eased per frame).
+  let tx = 0, ty = 0, rx = 0, ry = 0;
+  const fine = window.matchMedia?.('(pointer: fine)').matches;
+  if (fine && !reduced) {
+    hero.addEventListener('mousemove', (e) => {
+      const r = hero.getBoundingClientRect();
+      tx = ((e.clientX - r.left) / r.width - 0.5) * 0.7;
+      ty = ((e.clientY - r.top) / r.height - 0.5) * 0.55;
+    });
+    hero.addEventListener('mouseleave', () => { tx = 0; ty = 0; });
+
+    // Gentle 3D tilt on the live card itself.
+    const wrap = document.querySelector('.try-wrap');
+    if (wrap) {
+      hero.addEventListener('mousemove', (e) => {
+        const r = wrap.getBoundingClientRect();
+        const dx = (e.clientX - (r.left + r.width / 2)) / r.width;
+        const dy = (e.clientY - (r.top + r.height / 2)) / r.height;
+        wrap.style.transform = `rotateY(${dx * 4.5}deg) rotateX(${-dy * 4.5}deg)`;
+      });
+      hero.addEventListener('mouseleave', () => { wrap.style.transform = ''; });
+    }
+  }
+
+  const palette = () => document.documentElement.dataset.theme === 'dark'
+    ? { line: '124,116,245', bead: '251,191,36', alpha: 0.4 }
+    : { line: '79,70,229', bead: '217,119,6', alpha: 0.38 };
+
+  const draw = (t) => {
+    const { line, bead, alpha } = palette();
+    ctx.clearRect(0, 0, W, H);
+    rx += (tx - rx) * 0.05; ry += (ty - ry) * 0.05;
+    const ay = t * 0.00010 + rx * 1.6;   // slow spin + pointer lean
+    const ax = -0.42 + ry * 1.1;
+    const ca = Math.cos(ay), sa = Math.sin(ay), cb = Math.cos(ax), sb = Math.sin(ax);
+    const f = 3.2; // perspective focal length
+    const proj = new Array(N);
+    for (let i = 0; i < N; i++) {
+      const [x0, y0, z0] = pts[i];
+      const x1 = x0 * ca + z0 * sa, z1 = -x0 * sa + z0 * ca; // rotate Y
+      const y1 = y0 * cb - z1 * sb, z2 = y0 * sb + z1 * cb;  // rotate X
+      const s = f / (f + z2);
+      proj[i] = [cx + x1 * s * R, cy + y1 * s * R * 0.92, z2, s];
+    }
+    // Curve, depth-shaded per segment.
+    ctx.lineCap = 'round';
+    for (let i = 0; i < N; i++) {
+      const a = proj[i], b = proj[(i + 1) % N];
+      const depth = (2.4 - (a[2] + b[2])) / 4.4; // nearer = brighter
+      ctx.strokeStyle = `rgba(${line},${(alpha * depth).toFixed(3)})`;
+      ctx.lineWidth = (1.1 + a[3] * 0.9) * dpr;
+      ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+    }
+    // Beads traveling the curve — like study progress along a path.
+    const B = 9, shift = Math.floor((t * 0.02) % N);
+    for (let i = 0; i < B; i++) {
+      const p = proj[(shift + Math.floor(i * N / B)) % N];
+      const rad = (2.1 + p[3] * 1.6) * dpr;
+      ctx.beginPath();
+      ctx.fillStyle = `rgba(${bead},${(0.28 + (p[3] - 1) * 0.5).toFixed(3)})`;
+      ctx.arc(p[0], p[1], rad, 0, Math.PI * 2); ctx.fill();
+    }
+    // Faint node dots at fixed intervals.
+    for (let i = 0; i < N; i += 20) {
+      const p = proj[i];
+      ctx.beginPath();
+      ctx.fillStyle = `rgba(${line},${(alpha * 0.8 * (p[3] - 0.6)).toFixed(3)})`;
+      ctx.arc(p[0], p[1], 1.6 * dpr, 0, Math.PI * 2); ctx.fill();
+    }
+  };
+
+  if (reduced) { draw(0); return; }
+  const loop = (t) => { draw(t); requestAnimationFrame(loop); };
+  requestAnimationFrame(loop);
 }
 
 async function loadTryQuestion(host) {
