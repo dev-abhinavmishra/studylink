@@ -125,6 +125,11 @@ document.addEventListener('click', (e) => {
 });
 window.addEventListener('popstate', route);
 
+// pages ask the nav to refresh session stats (XP/streak) after progress
+window.addEventListener('lumina:nav-refresh', () => {
+  refreshMe().then(renderNav);
+});
+
 // boot
 (async () => {
   const theme = localStorage.getItem('lumina.theme');

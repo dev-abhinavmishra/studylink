@@ -275,7 +275,10 @@ async function submitAnswer(skillId, d, answer) {
   nextBtn.outerHTML = `<button class="btn btn-primary" id="nextAfter" style="margin-left:auto">${res.progress?.level === 'mastered' ? 'Mastered! Keep going' : 'Next question'} ${icon('arrowR', 15)}</button>`;
   host.querySelector('#nextAfter').onclick = () => loadQuestion(skillId);
 
-  if (res.correct && res.progress?.xpAwarded) toast(`+${res.progress.xpAwarded} XP`, 'xp');
+  if (res.correct && res.progress?.xpAwarded) {
+    toast(`+${res.progress.xpAwarded} XP`, 'xp');
+    window.dispatchEvent(new Event('lumina:nav-refresh'));
+  }
   if (res.guest) recordGuestAttempt(skillId, res.correct);
 
   // sidebar

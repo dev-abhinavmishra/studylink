@@ -158,6 +158,9 @@ export function wireNav(root, rerender) {
   root.querySelectorAll('.nav-links a').forEach((a) => {
     const r = a.getAttribute('data-route');
     if (r && path.startsWith(`/${r}`)) a.classList.add('active');
+    a.addEventListener('click', () => {
+      if (mobileOpen) { mobileOpen = false; rerender(); }
+    });
   });
 }
 
