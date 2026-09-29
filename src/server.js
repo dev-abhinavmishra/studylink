@@ -158,7 +158,13 @@ app.get('/api/me', (req, res) => {
 
 app.get('/api/catalog', (req, res) => {
   const prog = progressMap(req.session.userId);
-  const data = catalogSummary().map((s) => ({
+  const summary = catalogSummary();
+  const totals = {
+    subjects: summary.length,
+    courses: summary.reduce((n, s) => n + s.courses.length, 0),
+    lessons: summary.reduce((n, s) => n + s.courses.reduce((m, c) => m + c.lessons, 0), 0)
+  };
+  const data = summary.map((s) => ({
     ...s,
     courses: s.courses.map((c) => {
       const mastered = c.skills.filter((id) => prog.get(id)?.level === 'mastered').length;
@@ -166,7 +172,7 @@ app.get('/api/catalog', (req, res) => {
       return { ...c, masteredSkills: mastered, touchedSkills: touched, totalSkills: c.skills.length };
     })
   }));
-  res.json({ subjects: data });
+  res.json({ subjects: data, totals });
 });
 
 app.get('/api/subjects/:id', (req, res) => {
@@ -434,13 +440,12 @@ app.get('/api/questions', (req, res) => {
     where.push('(q.title LIKE ? OR q.body LIKE ?)');
     params.push(`%${q}%`, `%${q}%`);
   }
+  if (sort === 'unanswered') where.push('q.accepted_answer_id IS NULL');
   const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
-  const orderSql = sort === 'top' ? 'ORDER BY q.votes DESC, q.created_at DESC'
-    : sort === 'unanswered' ? 'AND q.accepted_answer_id IS NULL ORDER BY q.created_at DESC'
-    : 'ORDER BY q.created_at DESC';
+  const orderSql = sort === 'top' ? 'ORDER BY q.votes DESC, q.created_at DESC' : 'ORDER BY q.created_at DESC';
   const rows = db.prepare(`
     SELECT q.*, (SELECT COUNT(*) FROM answers a WHERE a.question_id = q.id) AS answer_count
-    FROM questions q ${whereSql} ${orderSql.replace('ORDER BY', 'ORDER BY')}
+    FROM questions q ${whereSql} ${orderSql}
     LIMIT ? OFFSET ?`).all(...params, limit, offset);
   const total = db.prepare(`SELECT COUNT(*) AS n FROM questions q ${whereSql}`).get(...params).n;
   res.json({
