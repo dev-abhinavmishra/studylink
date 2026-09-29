@@ -213,7 +213,7 @@ export function pageAsk(subjects) {
       </div>
       <div class="field">
         <label for="qBody">Details</label>
-        <textarea class="textarea" id="qBody" placeholder="What exactly are you stuck on? Show what you tried. Markdown works: **bold**, lists, `code`, $math$."></textarea>
+        <textarea class="textarea" id="qBody" placeholder="What exactly are you stuck on? Show what you tried. Markdown works: **bold**, lists, \`code\`, $math$."></textarea>
       </div>
       <div class="field">
         <label for="qTags">Tags <span class="muted" style="font-weight:400">(optional, comma-separated)</span></label>
