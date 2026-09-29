@@ -234,7 +234,15 @@ async function submitAnswer(skillId, d, answer) {
   if (answer == null || answer === '') return;
   practice.answered = true;
   const host = document.getElementById('qHost');
-  const res = await api('POST', `/api/skills/${skillId}/answer`, { qid: d.qid, answer, lessonId: d.lesson.id });
+  let res;
+  try {
+    res = await api('POST', `/api/skills/${skillId}/answer`, { qid: d.qid, answer, lessonId: d.lesson.id });
+  } catch (err) {
+    if (err.status === 410) { loadQuestion(skillId); return; } // expired — fetch a fresh question
+    practice.answered = false;
+    toast(err.message || 'Could not check that answer', '');
+    return;
+  }
   const q = d.question;
   practice.done += 1;
   if (res.correct) practice.correct += 1;

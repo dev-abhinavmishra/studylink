@@ -92,7 +92,9 @@ const GENERATORS = {
   },
 
   linearDistribute() {
-    const a = nonZero(2, 6), b = nonZero(-8, 8), c = nonZero(2, 9), x = rint(-6, 6);
+    const a = nonZero(2, 6), b = nonZero(-8, 8), x = rint(-6, 6);
+    let c = nonZero(2, 9);
+    while (c === a) c = nonZero(2, 9); // a === c would produce an identity with no unique answer
     const rhs = c * x + a * b; // a(x + b) = c*x + a*b → (a-c)x = a*b ... wait use form a(x+b)=cx+d style
     // Form: a(x + b) = c * x + d  → choose d so x lands integer: a*x + a*b = c*x + d → d = (a-c)x + a*b
     const d = (a - c) * x + a * b;
@@ -116,10 +118,21 @@ const GENERATORS = {
     if (x1 === x2) return GENERATORS.slopeFromPoints();
     const dy = y2 - y1, dx = x2 - x1;
     const m = frac(dy, dx);
+    // Distractors must stay distinct from the answer — e.g. |dy| = |dx| makes the
+    // reciprocal identical to the correct slope.
+    const correct = `$${m}$`;
+    const pool = [`$${frac(dx, dy)}$`, `$${frac(-dy, dx)}$`, `$${frac(dy, y2 - x1 || dx + 1)}$`];
+    const wrongs = [...new Set(pool.filter((w) => w !== correct))];
+    let bump = 1;
+    while (wrongs.length < 3) { // backfill with near-answer slopes if pool ran dry
+      const cand = `$${frac(dy + bump, dx)}$`;
+      if (cand !== correct && !wrongs.includes(cand)) wrongs.push(cand);
+      bump += 1;
+    }
     return choiceQ(
       `What is the slope of the line through $(${x1}, ${y1})$ and $(${x2}, ${y2})$?`,
-      `$${m}$`,
-      [`$${frac(dx, dy)}$`, `$${frac(-dy, dx)}$`, `$${frac(dy, y2 - x1 || dx + 1)}$`],
+      correct,
+      wrongs,
       {
         hint: 'Slope is rise over run: change in y divided by change in x.',
         steps: [

@@ -24,7 +24,13 @@ export function inlineMd(text) {
   s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
   s = s.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
   s = s.replace(/`([^`\n]+)`/g, '<code>$1</code>');
-  s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+  // Links: allow only http(s)/mailto/protocol-relative-safe paths; anything else
+  // (javascript:, data:, vbscript: ...) renders as plain text.
+  s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (m, text, url) => {
+    const u = String(url).replace(/&amp;/g, '&').trim();
+    const safe = /^(https?:|mailto:)/i.test(u) || /^\/(?!\/)/.test(u) || /^#/.test(u);
+    return safe ? `<a href="${u}" rel="noopener nofollow">${text}</a>` : `${text} (${esc(u)})`;
+  });
   return s;
 }
 

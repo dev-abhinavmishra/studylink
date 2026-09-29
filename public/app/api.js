@@ -32,15 +32,13 @@ export function guestSkillLevel(skillId) {
 }
 
 export async function flushGuestProgress() {
-  const items = [];
-  for (const [skillId, p] of Object.entries(state.guestProgress)) {
-    // replay as attempts: server increments per item; replay correct-then-rest
-    for (let i = 0; i < Math.min(p.correct, 50); i++) items.push({ skillId, correct: true });
-    for (let i = 0; i < Math.min(p.attempts - p.correct, 50); i++) items.push({ skillId, correct: false });
-  }
-  if (!items.length) return;
+  // Send per-skill aggregates; the server merges them without replay artifacts.
+  const skills = Object.entries(state.guestProgress).map(([skillId, p]) => ({
+    skillId, attempts: p.attempts, correct: p.correct, streak: p.streak
+  })).filter((s) => s.attempts > 0);
+  if (!skills.length) return;
   try {
-    await api('POST', '/api/progress/import', { items });
+    await api('POST', '/api/progress/import', { skills });
     state.guestProgress = {};
     saveGuest();
   } catch { /* keep local copy */ }

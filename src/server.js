@@ -10,14 +10,25 @@ const qaSeed = require('../content/qa');
 
 const app = express();
 const port = process.env.PORT || 3000;
+const isProd = process.env.NODE_ENV === 'production';
 
+if (isProd && !process.env.SESSION_SECRET) {
+  throw new Error('SESSION_SECRET env var is required in production');
+}
+
+app.set('trust proxy', 1); // needed for secure cookies behind a TLS-terminating proxy
 app.use(express.json({ limit: '256kb' }));
 app.use(express.static(path.join(process.cwd(), 'public')));
 app.use(session({
   secret: process.env.SESSION_SECRET || 'lumina-dev-secret',
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 1000 * 60 * 60 * 24 * 30 } // 30 days
+  cookie: {
+    maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: isProd
+  }
 }));
 
 // ---------- helpers -------------------------------------------------------
@@ -272,8 +283,10 @@ app.get('/api/skills/:id/question', (req, res) => {
 function checkAnswer(stored, given) {
   if (stored.answer == null || given == null) return false;
   if (typeof stored.answer === 'number') {
-    const g = parseFloat(String(given).replace(/[, ]/g, '').replace(/%$/, ''));
-    if (Number.isNaN(g)) return false;
+    const cleaned = String(given).trim().replace(/[, ]/g, '').replace(/%$/, '');
+    if (!cleaned) return false;
+    const g = Number(cleaned); // strict: rejects trailing junk that parseFloat would ignore
+    if (!Number.isFinite(g)) return false;
     return Math.abs(g - stored.answer) <= Math.max(stored.tolerance || 0, 1e-9);
   }
   if (typeof stored.answer === 'string') {
@@ -289,7 +302,12 @@ app.post('/api/skills/:id/answer', (req, res) => {
   if (!hit) return res.status(404).json({ error: 'Skill not found' });
   const { qid, answer } = req.body || {};
   const stored = sessionQ.get(qid);
-  const correct = stored ? checkAnswer(stored, answer) : false;
+  // A qid is single-use, bound to the skill that issued it, and expires.
+  if (!stored || stored.skillId !== hit.skill.id || stored.expires <= Date.now()) {
+    return res.status(410).json({ error: 'That question expired — load a new one.', expired: true });
+  }
+  sessionQ.delete(qid);
+  const correct = checkAnswer(stored, answer);
   let progress = null;
   let xpAwarded = 0;
   const uid = req.session.userId;
@@ -321,7 +339,7 @@ app.post('/api/skills/:id/answer', (req, res) => {
   res.json({
     correct,
     progress,
-    reveal: stored ? { answer: stored.answer, answerText: stored.answerText, steps: stored.steps } : null,
+    reveal: { answer: stored.answer, answerText: stored.answerText, steps: stored.steps },
     guest: !uid
   });
 });
@@ -347,22 +365,27 @@ app.post('/api/lessons/:id/complete', (req, res) => {
 
 // Merge guest (localStorage) progress after signup/login.
 app.post('/api/progress/import', requireAuth, (req, res) => {
-  const items = Array.isArray(req.body?.items) ? req.body.items.slice(0, 2000) : [];
+  // Client sends per-skill aggregates; merging in one write per skill avoids
+  // replay-order artifacts (misses wiping a live streak) and count caps.
+  const skills = Array.isArray(req.body?.skills) ? req.body.skills.slice(0, 500) : [];
   const uid = req.session.userId;
   let imported = 0;
-  for (const it of items) {
+  for (const it of skills) {
     if (!it || !skillIndex.has(it.skillId)) continue;
-    const ok = !!it.correct;
+    const ga = Math.max(0, Math.min(2000, parseInt(it.attempts, 10) || 0));
+    const gc = Math.max(0, Math.min(ga, parseInt(it.correct, 10) || 0));
+    const gs = Math.max(0, Math.min(ga, parseInt(it.streak, 10) || 0));
+    if (!ga) continue;
     const prev = db.prepare('SELECT * FROM skill_progress WHERE user_id = ? AND skill_id = ?').get(uid, it.skillId);
-    const attempts = (prev?.attempts || 0) + 1;
-    const correctCt = (prev?.correct || 0) + (ok ? 1 : 0);
-    const streak = ok ? (prev?.streak || 0) + 1 : 0;
+    const attempts = (prev?.attempts || 0) + ga;
+    const correctCt = (prev?.correct || 0) + gc;
+    const streak = Math.max(prev?.streak || 0, gs);
     db.prepare(`INSERT INTO skill_progress (user_id, skill_id, attempts, correct, streak, level)
       VALUES (?,?,?,?,?,?)
       ON CONFLICT (user_id, skill_id) DO UPDATE SET attempts=excluded.attempts, correct=excluded.correct,
         streak=excluded.streak, level=excluded.level, updated_at=datetime('now')`)
       .run(uid, it.skillId, attempts, correctCt, streak, levelFor(streak, correctCt));
-    if (ok) { awardXp(uid, 10); }
+    if (gc) awardXp(uid, 10 * gc);
     imported += 1;
   }
   res.json({ imported });
@@ -400,8 +423,13 @@ app.get('/api/dashboard', requireAuth, (req, res) => {
   const recentAttempts = db.prepare(`SELECT skill_id, correct, xp, created_at FROM attempts
     WHERE user_id = ? ORDER BY created_at DESC LIMIT 8`).all(uid)
     .map((a) => ({ ...a, skillName: skillIndex.get(a.skill_id)?.skill.name || a.skill_id }));
-  const weekly = db.prepare(`SELECT day, xp FROM activity_days WHERE user_id = ?
-    ORDER BY day DESC LIMIT 14`).all(uid).reverse();
+  const activity = new Map(db.prepare(`SELECT day, xp FROM activity_days WHERE user_id = ?
+    ORDER BY day DESC LIMIT 60`).all(uid).map((r) => [r.day, r.xp]));
+  // Emit the last 14 consecutive calendar days so the graph reflects gaps.
+  const weekly = Array.from({ length: 14 }, (_, i) => {
+    const d = new Date(Date.now() - (13 - i) * 86400000).toISOString().slice(0, 10);
+    return { day: d, xp: activity.get(d) || 0 };
+  });
   res.json({
     user: publicUser(u),
     xp, level: levelFromXp(xp), streakDays: streakDays(uid),
@@ -574,6 +602,9 @@ app.get('/api/coach/history', requireAuth, (req, res) => {
 
 app.post('/api/coach', (req, res) => {
   const { message } = req.body || {};
+  if (typeof message === 'string' && message.length > 1000) {
+    return res.status(400).json({ error: 'Keep messages under 1000 characters' });
+  }
   const user = req.session.userId
     ? db.prepare('SELECT * FROM users WHERE id = ?').get(req.session.userId) : null;
   const reply = coach.respond(message, user, db);
