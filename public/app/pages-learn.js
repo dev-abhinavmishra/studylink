@@ -272,7 +272,7 @@ async function submitAnswer(skillId, d, answer) {
       ${icon(res.correct ? 'check' : 'x', 17)}
       <span>${res.correct
         ? `Correct! ${res.progress?.xpAwarded ? `+${res.progress.xpAwarded} XP` : ''}${res.progress?.levelUp ? ` — level up: <b>${res.progress.level}</b>!` : ''}`
-        : `Not quite — the answer was <b>&nbsp;${esc(res.reveal?.answerText ?? res.reveal?.answer ?? '')}</b>`}</span>
+        : `Not quite — the answer was <b>&nbsp;${inlineMd(res.reveal?.answerText ?? String(res.reveal?.answer ?? ''))}</b>`}</span>
     </div>
     ${steps.length ? `
       <div class="steps-box">

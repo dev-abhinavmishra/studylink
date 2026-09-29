@@ -247,8 +247,8 @@ const GENERATORS = {
       answer: val, tolerance: 0.001,
       hint: 'Substitute the value of x and follow order of operations (square first).',
       steps: [
-        `Substitute: $${a}(${x})^2 ${signed(b)}(${x}) ${signed(c)}$`,
-        `Compute the square: $${a}(${x * x}) ${signed(b * x)} ${signed(c)}$`,
+        `Substitute: $${termCoef(a, `(${x})^2`)} ${signed(b)}(${x}) ${signed(c)}$`,
+        `Compute the square: $${termCoef(a, `(${x * x})`)} ${signed(b * x)} ${signed(c)}$`,
         `$$${a * x * x} ${signed(b * x)} ${signed(c)} = ${val}$$`
       ],
       answerText: `${val}`

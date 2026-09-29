@@ -219,7 +219,7 @@ async function loadTryQuestion(host) {
         ${icon(res.correct ? 'check' : 'x', 16)}
         <span>${res.correct
           ? `Correct${res.progress?.xpAwarded ? ` — +${res.progress.xpAwarded} XP` : ''}${res.progress?.levelUp ? ` — level up: <b>${res.progress.level}</b>` : ''}`
-          : `Not quite — it was <b>${esc(res.reveal?.answerText ?? '')}</b>`}</span>
+          : `Not quite — it was <b>${inlineMd(res.reveal?.answerText ?? '')}</b>`}</span>
       </div>
       ${steps.length ? `<div class="steps-box"><div class="steps-head">${icon('book', 14)} Worked solution</div>${steps.map((s, i) => `<div class="step"><span class="step-n">${i + 1}</span>${inlineMd(s)}</div>`).join('')}</div>` : ''}
       ${res.guest ? `<div class="try-cta">Nice — <a href="/signup" data-nav><b>create a free account</b></a> to keep that streak. Guest progress carries over.</div>` : ''}
