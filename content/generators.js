@@ -43,9 +43,12 @@ function termCoef(c, v) { // "3x", "-x", "x", "5", "-2" (for v='' constant)
   return `${c}${v}`;
 }
 
-// Build a 4-option multiple-choice question from a correct value + distractors.
+// Build a multiple-choice question from a correct value + distractors.
+// Distractors that collide with the answer or each other are dropped, so a
+// question may ship 3 options instead of 4 — never two identical choices.
 function choiceQ(prompt, correctDisplay, wrongs, extra = {}) {
-  const opts = shuffle([correctDisplay, ...wrongs.slice(0, 3)]);
+  const distinct = [...new Set(wrongs.filter((w) => w !== correctDisplay))];
+  const opts = shuffle([correctDisplay, ...distinct.slice(0, 3)]);
   const letters = ['a', 'b', 'c', 'd'];
   const choices = opts.map((text, i) => ({ id: letters[i], text }));
   return {
@@ -425,7 +428,7 @@ const GENERATORS = {
     return choiceQ(
       `Evaluate: $\\log_{${b}}(${val})$`,
       `$${e}$`,
-      [`$${e + 1}$`, `$${b}$`, `$${val / b}$`],
+      [`$${e + 1}$`, `$${b}$`, `$${val / b}$`, `$${e - 1}$`, `$${e + 2}$`, `$${val}$`],
       {
         hint: `Ask: ${b} raised to what power equals ${val}?`,
         steps: [

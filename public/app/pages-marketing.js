@@ -1,106 +1,290 @@
 import { icon } from './icons.js';
-import { esc } from './ui.js';
-import { state } from './api.js';
+import { esc, toast, skeletons, avatarHtml } from './ui.js';
+import { api, recordGuestAttempt } from './api.js';
+import { inlineMd, md } from './markdown.js';
+
+// A rotating pool of generated skills — the hero card plays a real question.
+const HERO_SKILLS = [
+  'two-step-equations', 'pythagorean-theorem', 'slope-from-points',
+  'order-of-operations', 'circle-area', 'function-evaluation',
+  'percent-change-practice', 'solve-quadratics'
+];
+
+const TICKER_SKILLS = [
+  'Two-step equations', 'Pythagorean theorem', 'Solving quadratics',
+  'Slope from two points', 'Order of operations', 'Evaluating functions',
+  'Power rule for derivatives', 'Evaluating logarithms', 'Circle area',
+  'Percent change', 'Compound interest', 'Unit pricing',
+  'Photosynthesis inputs & outputs', 'Balancing equations', 'Mole calculations',
+  'Cellular respiration', 'Punnett square genetics', 'Natural selection',
+  'River-valley civilizations', 'The Industrial Revolution', 'The Civil Rights Movement'
+];
 
 export function pageLanding(catalog) {
   const subjectCards = (catalog.subjects || []).map((s) => `
-    <a class="card card-hover card-pad subject-card card-link" href="/subjects/${s.id}" data-nav>
+    <a class="card card-hover card-pad subject-card card-link" href="/subjects/${s.id}" data-nav style="border-top:3px solid ${s.color}">
       <span class="subj-icon" style="background:${s.color}1a;color:${s.color}">${icon(s.icon, 22)}</span>
       <h3 class="card-title" style="margin-bottom:2px">${esc(s.name)}</h3>
       <div class="muted small">${esc(s.tagline)}</div>
       <div class="course-count mt-1">${s.courses.length} course${s.courses.length === 1 ? '' : 's'} · ${s.courses.reduce((n, c) => n + (c.lessons || 0), 0)} lessons</div>
     </a>`).join('');
 
+  const tickerItems = [...TICKER_SKILLS, ...TICKER_SKILLS].map((t) => `<span class="ticker-item">${esc(t)}<i></i></span>`).join('');
+
   return `
   <section class="hero">
-    <div class="hero-bg">
-      <div class="blob" style="width:480px;height:480px;background:#4f46e5;top:-140px;right:-80px"></div>
-      <div class="blob" style="width:380px;height:380px;background:#f59e0b;bottom:-160px;left:-100px;opacity:.35"></div>
+    <div class="hero-deco" aria-hidden="true">
+      <span class="deco deco-ring"></span>
+      <span class="deco deco-spark d1">${icon('spark', 18)}</span>
+      <span class="deco deco-spark d2">${icon('spark', 13)}</span>
     </div>
     <div class="wrap hero-grid">
-      <div>
-        <span class="hero-eyebrow">${icon('spark', 13)} Free. Forever. For everyone.</span>
-        <h1>Learn it. <span class="gradient-word">Solve it.</span> Master it.</h1>
-        <p class="lede">Lumina pairs a full course library with unlimited practice and step-by-step homework help — so "I'm stuck" becomes "I get it" in minutes.</p>
+      <div class="hero-copy">
+        <span class="hero-eyebrow">Free courses · unlimited practice · real homework help</span>
+        <h1>Where &ldquo;I&rsquo;m stuck&rdquo; becomes <em class="hl">&ldquo;I get it.&rdquo;<svg class="hl-squiggle" viewBox="0 0 240 16" preserveAspectRatio="none" aria-hidden="true"><path d="M5 11 C 45 3, 85 15, 128 8 S 215 4, 235 10" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/></svg></em></h1>
+        <p class="lede">Lumina is a full learning platform in one tab — lessons you can actually finish, practice that grades itself and shows the work, and a help board where every answer explains its steps.</p>
         <div class="hero-actions">
-          <a class="btn btn-amber btn-lg" href="/signup" data-nav>Start learning — it's free ${icon('arrowR', 17)}</a>
-          <a class="btn btn-outline btn-lg" href="/help" data-nav>Browse solved problems</a>
+          <a class="btn btn-amber btn-lg" href="/signup" data-nav>Start learning — free ${icon('arrowR', 17)}</a>
+          <a class="btn btn-outline btn-lg" href="/subjects" data-nav>Browse the library</a>
         </div>
-        <div class="hero-proof">
-          <span><b>${catalog.totals?.courses || '—'}</b> courses</span>
-          <span><b>${catalog.totals?.lessons || '—'}</b> lessons</span>
-          <span><b>Unlimited</b> practice questions</span>
-          <span><b>Step-by-step</b> expert answers</span>
-        </div>
+        <ul class="hero-points">
+          <li>${icon('check', 14)} No card, no trial timer</li>
+          <li>${icon('check', 14)} Every answer shows the work</li>
+          <li>${icon('check', 14)} Guest progress carries into your account</li>
+        </ul>
       </div>
-      <div>
-        <div class="mock-window">
-          <div class="mock-bar"><i></i><i></i><i></i></div>
-          <div class="mock-body">
-            <div class="small muted mb-1" style="text-transform:uppercase;letter-spacing:.07em;font-weight:700">Practice · Algebra</div>
-            <div style="font-weight:650;font-size:1.05rem;margin-bottom:14px">Solve for x: 3x + 7 = 22</div>
-            <div class="choice-list">
-              <div class="choice"><span class="choice-letter">A</span> x = 4</div>
-              <div class="choice correct"><span class="choice-letter">B</span> x = 5</div>
-              <div class="choice dim"><span class="choice-letter">C</span> x = 7</div>
-              <div class="choice dim"><span class="choice-letter">D</span> x = 15</div>
-            </div>
-            <div class="feedback ok mt-2">${icon('check', 16)} Correct! +10 XP &nbsp;·&nbsp; <u style="font-weight:600">Show steps</u></div>
-          </div>
+      <div class="hero-demo">
+        <div class="try-wrap">
+          <span class="try-badge">${icon('zap', 12)} Live — answer it</span>
+          <div class="try-card"><div id="tryHost">${skeletons(1, 210)}</div></div>
+          <p class="try-note">That&rsquo;s a real practice question — same engine, same grading, straight from the app.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="section" style="padding-top:20px">
+  <div class="ticker" aria-hidden="true"><div class="ticker-track">${tickerItems}</div></div>
+
+  <section class="section reveal">
     <div class="wrap">
-      <div class="page-head" style="padding-top:0"><div class="eyebrow">Three ways Lumina works for you</div><h2>Everything you need to actually understand</h2></div>
-      <div class="pillar-grid">
-        <div class="pillar">
-          <div class="pillar-icon" style="background:var(--primary-soft);color:var(--primary-ink)">${icon('book', 24)}</div>
-          <h3>Learn</h3>
-          <p>Short, readable lessons with worked examples — built like the best teacher you ever had. No walls of video.</p>
+      <div class="section-head">
+        <div class="eyebrow">How it works</div>
+        <h2 class="display">Three habits, one place</h2>
+      </div>
+      <div class="how-grid">
+        <div class="how-item">
+          <span class="how-n">01</span>
+          <h3>Learn the concept</h3>
+          <p>Short, readable lessons with worked examples and &ldquo;watch out&rdquo; callouts — no hour-long videos, no walls of text.</p>
+          <a href="/subjects" data-nav class="how-link">Open a lesson ${icon('arrowR', 14)}</a>
         </div>
-        <div class="pillar">
-          <div class="pillar-icon" style="background:var(--amber-soft);color:var(--amber-deep)">${icon('target', 24)}</div>
-          <h3>Practice</h3>
-          <p>Adaptive question generators give you infinite reps. Master a skill by stringing correct answers together — we track every step.</p>
+        <div class="how-item">
+          <span class="how-n">02</span>
+          <h3>Practice to mastery</h3>
+          <p>Unlimited generated questions, graded instantly with step-by-step solutions. Five in a row and the skill is yours.</p>
+          <a href="/practice/two-step-equations" data-nav class="how-link">Try practice ${icon('arrowR', 14)}</a>
         </div>
-        <div class="pillar">
-          <div class="pillar-icon" style="background:var(--green-soft);color:var(--green)">${icon('chat', 24)}</div>
-          <h3>Solve</h3>
-          <p>Stuck on homework? Search thousands of step-by-step solutions, or ask the community. Coach helps anytime.</p>
+        <div class="how-item">
+          <span class="how-n">03</span>
+          <h3>Ask when stuck</h3>
+          <p>A homework-help board of real solved problems — plus Coach, a built-in study assistant that works through it with you.</p>
+          <a href="/help" data-nav class="how-link">See solved problems ${icon('arrowR', 14)}</a>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="section" style="background:var(--surface);border-block:1px solid var(--border)">
+  <section class="section section-band reveal">
     <div class="wrap">
-      <div class="page-head" style="padding-top:0"><div class="eyebrow">The library</div><h2>Pick a subject. Go deep.</h2></div>
+      <div class="section-head">
+        <div class="eyebrow">The library</div>
+        <h2 class="display">Pick a subject. Go deep.</h2>
+        <p class="sub">${catalog.totals?.courses || ''} courses · ${catalog.totals?.lessons || ''} lessons · every one free</p>
+      </div>
       <div class="grid grid-3">${subjectCards}</div>
     </div>
   </section>
 
-  <section class="section">
+  <section class="section reveal" id="solvedSection">
     <div class="wrap">
-      <div class="quote-strip">
-        <div class="card quote-card">"The step-by-step breakdowns are what Chegg charges for — except I actually learn the method, not just the answer."<div class="who">— Priya, AP Calculus</div></div>
-        <div class="card quote-card">"Went from dreading algebra homework to a 23-day streak. The mastery system makes progress visible."<div class="who">— Marcus, 9th grade</div></div>
-        <div class="card quote-card">"I recommend Lumina to my students because it explains <em>why</em>, not just <em>what</em>."<div class="who">— Ms. Delgado, physics teacher</div></div>
+      <div class="section-head">
+        <div class="eyebrow">Homework help</div>
+        <h2 class="display">Every answer shows the work.</h2>
+        <p class="sub">Real threads from the board — not vibes, not one-line answers.</p>
+      </div>
+      <div id="solvedHost">${skeletons(2, 150)}</div>
+    </div>
+  </section>
+
+  <section class="section section-band reveal">
+    <div class="wrap split">
+      <div>
+        <div class="eyebrow">Coach</div>
+        <h2 class="display">A study assistant that shows its work</h2>
+        <p class="sub" style="margin-bottom:22px">Coach solves equations step-by-step, explains any topic from the library, finds you practice, and builds a study plan from your actual progress. No API key, no waitlist — it&rsquo;s just in the app.</p>
+        <a class="btn btn-primary" href="/coach" data-nav>${icon('chat', 16)} Talk to Coach</a>
+      </div>
+      <div class="coach-mock">
+        <div class="chat-msg user"><span class="chat-avatar">${icon('user', 15)}</span><div class="chat-bubble">solve 3x + 5 = 20</div></div>
+        <div class="chat-msg bot"><span class="chat-avatar">${icon('spark', 15)}</span><div class="chat-bubble">${md('Solving $3x + 5 = 20$:\n\n**1.** Move everything to one side: $(3x + 5) - (20) = 0$\n**2.** This reduces to $3x - 15 = 0$\n**3.** Isolate $x$: $x = \\frac{15}{3} = \\boxed{5}$')}</div></div>
       </div>
     </div>
   </section>
 
   <section class="section" style="padding-top:10px">
     <div class="wrap">
-      <div class="cta-band">
-        <h2>Your homework doesn't stand a chance.</h2>
-        <p>Join thousands of students learning for free.</p>
-        <div class="mt-3"><a class="btn btn-amber btn-lg" href="/signup" data-nav>Create a free account</a></div>
+      <div class="cta-panel">
+        <div class="cta-deco" aria-hidden="true"><i class="t"></i><i class="t"></i><i class="t"></i></div>
+        <h2 class="display">Stuck is temporary. Let&rsquo;s fix that.</h2>
+        <p>Free forever. Your first win is about ninety seconds away.</p>
+        <div class="mt-3" style="position:relative">
+          <a class="btn btn-amber btn-lg" href="/signup" data-nav>Create a free account</a>
+          <a class="btn btn-outline btn-lg cta-ghost" href="/help" data-nav>Browse solved problems</a>
+        </div>
       </div>
     </div>
   </section>`;
+}
+
+// ---------- landing wiring --------------------------------------------------
+
+export function wireLanding(catalog) {
+  const subjectName = new Map((catalog.subjects || []).map((s) => [s.id, s.name]));
+  const tryHost = document.getElementById('tryHost');
+  if (tryHost) loadTryQuestion(tryHost);
+  loadSolved(subjectName);
+  // reveal-on-scroll (with a hard fallback so sections never stay hidden)
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
+  setTimeout(() => document.querySelectorAll('.reveal:not(.in)').forEach((el) => el.classList.add('in')), 1600);
+}
+
+async function loadTryQuestion(host) {
+  host.innerHTML = skeletons(1, 190);
+  const skillId = HERO_SKILLS[Math.floor(Math.random() * HERO_SKILLS.length)];
+  let d;
+  try {
+    d = await api('GET', `/api/skills/${skillId}/question`);
+  } catch {
+    host.innerHTML = `<div class="muted small">Couldn&rsquo;t load a question — <a href="/practice/two-step-equations" data-nav>open practice</a>.</div>`;
+    return;
+  }
+  const q = d.question;
+  host.innerHTML = `
+    <div class="try-skill">${esc(d.skill.name)}<span class="try-from">from ${esc(d.lesson.title)}</span></div>
+    <div class="try-prompt">${inlineMd(q.prompt)}</div>
+    ${q.type === 'choice'
+      ? `<div class="choice-list">${q.choices.map((c) => `<button class="choice" data-id="${c.id}"><span class="choice-letter">${c.id}</span><span>${inlineMd(c.text)}</span></button>`).join('')}</div>`
+      : `<div class="numeric-row"><input class="input" id="tryNum" placeholder="Your answer…" autocomplete="off" ${q.type === 'numeric' ? 'inputmode="decimal"' : ''}><button class="btn btn-primary" id="tryCheck">Check</button></div>`}
+    <div class="try-tools">
+      <button class="btn btn-ghost btn-sm" id="tryHint">${icon('lightbulb', 14)} Hint</button>
+      <button class="btn btn-ghost btn-sm" id="tryNew">${icon('arrowR', 14)} Different question</button>
+    </div>
+    <div id="tryHintBox"></div>
+    <div id="tryFb"></div>`;
+
+  let done = false;
+  const submit = async (answer) => {
+    if (done || answer == null || answer === '') return;
+    done = true;
+    let res;
+    try {
+      res = await api('POST', `/api/skills/${skillId}/answer`, { qid: d.qid, answer, lessonId: d.lesson.id });
+    } catch (err) {
+      if (err.status === 410) { loadTryQuestion(host); return; }
+      done = false;
+      toast(err.message || 'Could not check that answer');
+      return;
+    }
+    host.querySelectorAll('.choice').forEach((b) => {
+      b.disabled = true;
+      const isAns = b.dataset.id === res.reveal?.answer;
+      const picked = b.dataset.id === answer;
+      if (isAns) b.classList.add('correct');
+      else if (picked) b.classList.add('wrong');
+      else b.classList.add('dim');
+    });
+    const num = host.querySelector('#tryNum');
+    if (num) {
+      num.disabled = true;
+      num.style.borderColor = res.correct ? 'var(--green)' : 'var(--red)';
+      const btn = host.querySelector('#tryCheck');
+      if (btn) btn.disabled = true;
+    }
+    const steps = res.reveal?.steps || [];
+    host.querySelector('#tryFb').innerHTML = `
+      <div class="feedback ${res.correct ? 'ok' : 'no'}">
+        ${icon(res.correct ? 'check' : 'x', 16)}
+        <span>${res.correct
+          ? `Correct${res.progress?.xpAwarded ? ` — +${res.progress.xpAwarded} XP` : ''}${res.progress?.levelUp ? ` — level up: <b>${res.progress.level}</b>` : ''}`
+          : `Not quite — it was <b>${esc(res.reveal?.answerText ?? '')}</b>`}</span>
+      </div>
+      ${steps.length ? `<div class="steps-box"><div class="steps-head">${icon('book', 14)} Worked solution</div>${steps.map((s, i) => `<div class="step"><span class="step-n">${i + 1}</span>${inlineMd(s)}</div>`).join('')}</div>` : ''}
+      ${res.guest ? `<div class="try-cta">Nice — <a href="/signup" data-nav><b>create a free account</b></a> to keep that streak. Guest progress carries over.</div>` : ''}
+      <div class="mt-2 flex gap-1">
+        <button class="btn btn-outline btn-sm" id="tryAgain">Another question ${icon('arrowR', 13)}</button>
+        <a class="btn btn-ghost btn-sm" href="/practice/${skillId}" data-nav>Practice this skill</a>
+      </div>`;
+    host.querySelector('#tryAgain').onclick = () => loadTryQuestion(host);
+    if (res.correct && res.progress?.xpAwarded) {
+      toast(`+${res.progress.xpAwarded} XP`, 'xp');
+      window.dispatchEvent(new Event('lumina:nav-refresh'));
+    }
+    if (res.guest) recordGuestAttempt(skillId, res.correct);
+  };
+
+  host.querySelectorAll('.choice').forEach((b) => { b.onclick = () => submit(b.dataset.id); });
+  const num = host.querySelector('#tryNum');
+  if (num) {
+    num.onkeydown = (e) => { if (e.key === 'Enter') submit(num.value); };
+    host.querySelector('#tryCheck').onclick = () => submit(num.value);
+  }
+  host.querySelector('#tryHint').onclick = () => {
+    if (q.hint) host.querySelector('#tryHintBox').innerHTML = `<div class="hint-box">${icon('lightbulb', 14)} ${inlineMd(q.hint)}</div>`;
+  };
+  host.querySelector('#tryNew').onclick = () => loadTryQuestion(host);
+}
+
+async function loadSolved(subjectName) {
+  const host = document.getElementById('solvedHost');
+  if (!host) return;
+  try {
+    const list = await api('GET', '/api/questions?sort=top');
+    const solved = (list.questions || []).filter((q) => q.answer_count > 0).slice(0, 3);
+    if (!solved.length) { host.innerHTML = '<div class="card card-pad muted">Solved problems will appear here.</div>'; return; }
+    const detail = await api('GET', `/api/questions/${solved[0].id}`);
+    const ans = (detail.answers || []).find((a) => a.accepted) || detail.answers?.[0];
+    host.innerHTML = `
+      <div class="solved-grid">
+        <a class="card card-hover solved-main card-link" href="/help/${solved[0].id}" data-nav>
+          <div class="qa-meta">
+            <span class="badge badge-accepted">${icon('check', 12)} Accepted answer</span>
+            <span>${esc(subjectName.get(solved[0].subject_id) || '')}</span>
+            <span>${icon('up', 12)} ${solved[0].votes} votes</span>
+          </div>
+          <h3>${esc(solved[0].title)}</h3>
+          ${ans ? `<div class="solved-answer">
+            <div class="solved-by">${avatarHtml(ans.author_name, ans.author_name?.length || 0, 22)} <b>${esc(ans.author_name)}</b>${ans.is_expert ? ` <span class="badge badge-expert">${icon('spark', 11)} Expert</span>` : ''}</div>
+            <div class="solved-body">${md(ans.body)}</div>
+          </div>` : ''}
+          <span class="solved-link">Read the full solution ${icon('arrowR', 14)}</span>
+        </a>
+        <div class="solved-side">
+          ${solved.slice(1).map((q) => `
+            <a class="card card-hover card-pad card-link solved-row" href="/help/${q.id}" data-nav>
+              <div class="qa-meta"><span>${esc(subjectName.get(q.subject_id) || '')}</span><span>${icon('up', 11)} ${q.votes}</span><span>${icon('chat', 11)} ${q.answer_count}</span></div>
+              <div class="qa-title">${esc(q.title)}</div>
+            </a>`).join('')}
+          <a class="card card-hover card-pad card-link solved-more" href="/help?sort=top" data-nav>
+            Browse every solved problem ${icon('arrowR', 15)}
+          </a>
+        </div>
+      </div>`;
+  } catch {
+    document.getElementById('solvedSection')?.remove();
+  }
 }
 
 export function pageAbout() {

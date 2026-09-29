@@ -1,6 +1,6 @@
 import { api, refreshMe, state } from './api.js';
 import { navHtml, footerHtml, wireNav, go, _setNav, skeletons } from './ui.js';
-import { pageLanding, pageAbout, pageFaq, pageTerms, pagePrivacy, pageNotFound } from './pages-marketing.js';
+import { pageLanding, wireLanding, pageAbout, pageFaq, pageTerms, pagePrivacy, pageNotFound } from './pages-marketing.js';
 import { pageAuth, wireAuth, pageProfile, wireProfile } from './pages-auth.js';
 import { pageSubjects, pageSubject, pageCourse, pageLesson, wireLesson, pagePractice, loadQuestion, pageDashboard } from './pages-learn.js';
 import { pageHelp, wireHelp, pageThread, wireThread, pageAsk, wireAsk, pageCoach, wireCoach, pageSearch } from './pages-help.js';
@@ -27,6 +27,7 @@ async function route() {
       if (state.me?.user) { go('/dashboard'); return; }
       const catalog = await api('GET', '/api/catalog');
       page = pageLanding(catalog);
+      wire = () => wireLanding(catalog);
       title = 'Lumina — Learn it. Solve it. Master it.';
     } else if (path === '/about') { page = pageAbout(); title = 'About · Lumina'; }
     else if (path === '/faq') { page = pageFaq(); title = 'FAQ · Lumina'; }
