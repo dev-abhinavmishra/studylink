@@ -376,6 +376,20 @@ a.card-link:hover .card-title { color: var(--primary-ink); }
 .unit-test-link { font-size: .82rem; font-weight: 700; color: var(--primary); display: inline-flex; align-items: center; gap: 4px; text-decoration: none; }
 .unit-test-link:hover { text-decoration: underline; }
 
+/* ---------- practice map ---------- */
+.skill-map { margin-top: 14px; border: 1px dashed var(--border); border-radius: var(--r-md); padding: 12px 14px; background: color-mix(in srgb, var(--surface-2, var(--surface)) 55%, transparent); }
+.skill-map-head { font-size: .74rem; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); display: flex; align-items: center; gap: 6px; margin-bottom: 9px; }
+.skill-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.skill-chip { display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border: 1px solid var(--border); border-radius: 99px; background: var(--surface); font-size: .82rem; font-weight: 600; color: var(--ink); transition: .14s; }
+.skill-chip .skill-chip-name { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.skill-chip svg:last-child { color: var(--faint); transition: .14s; }
+.skill-chip:hover { border-color: var(--primary-border); box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+.skill-chip:hover svg:last-child { color: var(--primary); transform: translateX(2px); }
+.skill-chip[data-level="attempted"] { border-color: color-mix(in srgb, var(--m-attempted) 45%, var(--border)); }
+.skill-chip[data-level="familiar"] { border-color: color-mix(in srgb, var(--m-familiar) 50%, var(--border)); }
+.skill-chip[data-level="proficient"] { border-color: color-mix(in srgb, var(--m-proficient) 55%, var(--border)); }
+.skill-chip[data-level="mastered"] { border-color: color-mix(in srgb, var(--m-mastered) 60%, var(--border)); background: color-mix(in srgb, var(--m-mastered) 7%, var(--surface)); }
+
 /* ---------- interactive lesson widgets ---------- */
 .lgraph { border: 1px solid var(--border); border-radius: var(--r-md); padding: 16px 18px; margin: 22px 0; background: var(--surface-2, var(--surface)); }
 .lgraph-cap { font-size: .86rem; color: var(--muted); margin-bottom: 8px; font-weight: 600; }

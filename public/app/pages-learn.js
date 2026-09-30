@@ -112,6 +112,23 @@ export function pageCourse(subject, course) {
               </div>
             </a>`).join('')}
         </div>
+        ${(() => {
+          const seen = new Set();
+          const skills = u.lessons.filter((l) => l.skill && !seen.has(l.skill.id) && seen.add(l.skill.id));
+          return skills.length ? `
+            <div class="skill-map">
+              <div class="skill-map-head">${icon('target', 13)} Practice map — pick a skill to drill it</div>
+              <div class="skill-chips">
+                ${skills.map((l) => {
+                  const lvl = l.mastery || guestSkillLevel(l.skill.id);
+                  return `
+                    <a class="skill-chip" data-level="${lvl || ''}" href="/practice/${l.skill.id}" data-nav>
+                      ${masteryDot(lvl)}<span class="skill-chip-name">${esc(l.skill.name)}</span>${icon('arrowR', 13)}
+                    </a>`;
+                }).join('')}
+              </div>
+            </div>` : '';
+        })()}
       </div>`).join('')}
   </div>`;
 }

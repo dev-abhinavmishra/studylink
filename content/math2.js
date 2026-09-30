@@ -672,6 +672,7 @@ module.exports = {
                 { type: 'example', title: 'Domain of f(x) = 1/(x − 3)', text: 'The denominator fails only at $x = 3$, so the domain is all real numbers **except** 3 — written $x \\ne 3$, or $(-\\infty, 3) \\cup (3, \\infty)$.' },
                 { type: 'example', title: 'Domain of g(x) = √(x − 5)', text: 'The root needs $x - 5 \\ge 0$, so the domain is $x \\ge 5$ — the interval $[5, \\infty)$.' },
                 { type: 'p', text: 'Range is trickier — reason about outputs instead. Since $x^2 \\ge 0$ always, $f(x) = x^2$ has range $y \\ge 0$, and $f(x) = x^2 - 3$ shifts that down to $y \\ge -3$. Graphs help: the range is the vertical "shadow" the curve casts.' },
+                { type: 'graph', caption: 'Play with it: drag **a** and **c** — the vertex is the tip of the range. Flip $a$ below 0 and the range becomes $y \\le c$ instead of $y \\ge c$.', expr: 'a*x^2+c', xrange: [-8, 8], yrange: [-15, 15], sliders: { a: { min: -3, max: 3, step: 0.5, value: 1, label: 'stretch a' }, c: { min: -10, max: 10, step: 1, value: -3, label: 'shift c' } } },
                 { type: 'callout', kind: 'warning', text: 'Do not confuse the two: $x \\ge 1$ describes a domain (allowed inputs), while $y \\ge 2$ describes a range (produced outputs). Check which axis your inequality lives on.' }
               ],
               skill: {

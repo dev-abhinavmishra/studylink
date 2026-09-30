@@ -501,5 +501,219 @@ You're never assuming $P(n)$ globally — you're proving a machine that converts
 **Examples of strong negative correlations:** altitude vs. temperature, speed vs. travel time, price vs. quantity demanded — all legitimately useful relationships.
 
 **The real "bad" correlations:** $r$ near $0$ (no linear pattern) — and strong-but-misleading ones: a tight $r$ computed on data with a curved shape or a few influential outliers can claim a relationship the eyeball plot would reject. Always plot the data; $r$ only measures *straight-line* association, and it never says anything about causation.`
+  },
+  {
+    subjectId: 'science',
+    title: 'Balancing C₃H₈ + O₂ → CO₂ + H₂O — where do the coefficients go?',
+    body: 'I keep getting different numbers of carbons on each side when balancing the combustion of propane. What\'s the systematic way to do this instead of guessing?',
+    tags: ['chemistry', 'balancing-equations'],
+    author: 'Elena R.',
+    answer: `System beats guessing: work element by element, and leave oxygen for last since it appears in two products.
+
+**Skeleton:** $\\mathrm{C_3H_8} + \\mathrm{O_2} \\rightarrow \\mathrm{CO_2} + \\mathrm{H_2O}$
+
+**Step 1 — carbon.** 3 C on the left → need 3 $\\mathrm{CO_2}$:
+$$\\mathrm{C_3H_8 + O_2 \\rightarrow 3CO_2 + H_2O}$$
+
+**Step 2 — hydrogen.** 8 H on the left → need 4 $\\mathrm{H_2O}$ (8 H total):
+$$\\mathrm{C_3H_8 + O_2 \\rightarrow 3CO_2 + 4H_2O}$$
+
+**Step 3 — oxygen.** Right side has $3 \\times 2 + 4 = 10$ O → need 5 $\\mathrm{O_2}$:
+$$\\mathrm{C_3H_8 + 5O_2 \\rightarrow 3CO_2 + 4H_2O}$$
+
+**Check:** C: 3=3 ✓ · H: 8=8 ✓ · O: 10=10 ✓
+
+**Why oxygen last:** every earlier coefficient change affects the O count through both products — solving it once at the end avoids redoing the work. (This is also why combustion of any hydrocarbon $\\mathrm{C_xH_y}$ ends up needing $x$ $\\mathrm{CO_2}$ and $y/2$ $\\mathrm{H_2O}$.)`
+  },
+  {
+    subjectId: 'science',
+    title: 'Why do we feel weightless in free fall even though gravity is still pulling?',
+    body: 'In physics class we said astronauts in the ISS are "weightless" but there\'s still ~90% of Earth\'s gravity up there. How can both be true?',
+    tags: ['physics', 'gravity', 'free-fall'],
+    author: 'Dan W.',
+    answer: `Both are true because *weightlessness* isn't about the force of gravity — it's about the absence of a support force pushing back on you.
+
+**Step 1 — what you actually feel.** Standing on the floor, gravity pulls you down, but the floor pushes you *up* with a normal force. Your body senses that push, not gravity itself — a scale measures the normal force, which is what we call "apparent weight."
+
+**Step 2 — remove the support.** In free fall (or orbit, which is just free fall with enough sideways speed to keep missing the ground), you and everything around you accelerate together at $g$. Nothing pushes back, so your apparent weight is 0 — even though $F_g \\approx 0.9mg$ up at the ISS.
+
+**Step 3 — the elevator test.** A scale in a falling elevator reads zero. A scale in an elevator accelerating upward reads *more* than $mg$. The gravity force barely changed — only the support force did.
+
+**The deep version:** gravity accelerates every part of you equally, so it produces no internal stress — your body has nothing to detect. That's the seed of Einstein's equivalence principle: free fall *is* inertial motion.`
+  },
+  {
+    subjectId: 'computing',
+    title: 'When is a linked list actually better than an array?',
+    body: 'My textbook says linked lists are O(1) insert and arrays are O(n), but every job interview seems to prefer arrays. When do linked lists genuinely win?',
+    tags: ['data-structures', 'big-o'],
+    author: 'Sam O.',
+    answer: `Linked lists win in a narrow but real set of cases — the complexity chart only tells half the story.
+
+**Where linked lists win:**
+
+1. **Frequent insert/remove at the front or in the middle** — with a pointer to the position, it's O(1); an array pays O(n) shifting elements.
+2. **Stable node identity** — iterators/pointers into a linked list stay valid as you mutate it; arrays invalidate them when they grow or shift.
+3. **Unpredictable growth** — no resize-and-copy hiccups (an array's O(n) copy happens all at once; latency-sensitive queues care).
+4. Classic uses: LRU cache internals, undo stacks, kernel task lists, implementations of queues/deques.
+
+**Where arrays win (most of the time):**
+
+- **Memory locality** — array elements sit adjacent; the CPU prefetches them, so traversal is many times faster in *wall-clock* terms even at the same Big-O.
+- **Random access** — indexing like a[i] is O(1); a linked list walks there.
+- **Overhead** — each list node costs a pointer (8 bytes) plus allocator overhead; a cache miss per hop.
+
+**Honest rule:** default to arrays. Reach for a linked list only when you *frequently* splice in the middle *and* already hold a pointer to the splice point — if you have to walk to the position anyway, the O(1) insert never saves you.`
+  },
+  {
+    subjectId: 'economics',
+    title: 'If demand falls, why does price drop less when supply is steep?',
+    body: 'My problem set says "a leftward demand shift causes a small price change but large quantity change when supply is inelastic." I don\'t see *why* the steepness of supply should matter.',
+    tags: ['supply-demand', 'elasticity'],
+    author: 'Hannah L.',
+    answer: `Think of it as a negotiation: when demand falls, price has to drop until producers are willing to sell less — and *how far* price must travel depends on how stubborn producers are.
+
+**Step by step:**
+
+1. Demand shifts left → at the old price, there's a surplus — goods pile up unsold.
+2. Sellers start cutting price to clear it.
+3. Now look at the supply curve: each $1 price cut convinces producers to reduce quantity by (supply's responsiveness).
+
+**If supply is steep (inelastic):** producers barely respond to price — a $1 cut sheds almost no quantity. The surplus persists, so price must keep falling a long way to coax out even a small quantity reduction. **Large price change, small quantity change.**
+
+**If supply is flat (elastic):** a small price cut immediately convinces many producers to back off → the surplus clears fast → price barely moves while quantity drops a lot.
+
+**Same logic, mirrored:** a steep *demand* curve means price changes do the heavy lifting whenever *supply* shifts — that's why gasoline prices spike hard on refinery outages (drivers don't cut back easily).`
+  },
+  {
+    subjectId: 'economics',
+    title: 'Why do banks "create" money when they lend — isn\'t that just relending deposits?',
+    body: 'My textbook says bank lending creates new money and I can\'t square it with "banks lend out your deposits." If they lend my deposit, how is anything created?',
+    tags: ['banking', 'money-supply'],
+    author: 'Tom F.',
+    answer: `Both things happen at once, and that's the trick — the deposit doesn't disappear when the loan is made.
+
+**Walk the mechanics:**
+
+1. You deposit $1,000 — the money supply counts your $1,000 (it's spendable).
+2. The bank must keep, say, 10% in reserve → it lends $900 to a borrower.
+3. The borrower's account now shows $900 **and your account still shows $1,000.** Nothing was taken from you — the loan is a *new* deposit the bank created by typing it into existence.
+4. Money supply: $1,000 + $900 = $1,900. The $900 is genuinely new spendable money.
+
+**When the borrower spends it**, the $900 lands as a deposit at another bank → that bank reserves $90, lends $810 → repeat. The chain converges: your $1,000 can support up to $10,000 of deposits (the **money multiplier**, $1/\\text{reserve ratio}$).
+
+**The limits that keep it sane:** reserve/capital requirements, demand for loans, the central bank's interest rate, and the fact that loans get repaid — repayment *destroys* the created money symmetrically. "Relending deposits" is the folk version; the real mechanism is "deposits are born with the loan."`
+  },
+  {
+    subjectId: 'english',
+    title: 'Active vs passive voice — is passive ever actually the right choice?',
+    body: 'Every writing guide says "use active voice," but my science teacher writes passive everywhere ("the solution was heated"). Is the rule just wrong?',
+    tags: ['grammar', 'style', 'writing'],
+    author: 'Nia P.',
+    answer: `The rule is a heuristic, not a law — passive voice is a tool with legitimate jobs.
+
+**Active voice** puts the doer first: *"The committee rejected the proposal."* It's usually clearer, shorter, and more energetic — which is why the advice exists. Passive overuse makes writing mushy: *"Mistakes were made"* famously dodges *who* made them.
+
+**Where passive is genuinely better:**
+
+1. **The doer is unknown or irrelevant** — "The samples were contaminated" — we don't know who contaminated them.
+2. **The receiver matters more than the actor** — "The suspect was arrested" — the news is about the suspect, not the officers.
+3. **Scientific/technical writing** — "The solution was heated to 60°C" keeps focus on the procedure, not the technician (though many journals now prefer "We heated the solution…").
+4. **Flow** — passive can move known information earlier in the sentence, which improves cohesion with the previous one.
+
+**The real test:** ask "would naming the actor add information the reader needs?" If yes → active. If the actor is obvious, unknown, or distracting → passive is honest and sometimes more precise. The sin isn't passive voice; it's using it to hide agency.`
+  },
+  {
+    subjectId: 'english',
+    title: 'Oxford comma — does the missing comma in "A, B and C" actually change meaning?',
+    body: 'Two people told me the Oxford comma is optional style, but I saw a lawsuit where it cost millions. Can it actually change what a sentence means?',
+    tags: ['punctuation', 'grammar'],
+    author: 'Ray D.',
+    answer: `Yes — the serial comma is style *and* occasionally substance. You found the famous case: **O'Connor v. Oakhurst Dairy (2017)**.
+
+**The lawsuit:** Maine law exempted overtime for "packing for shipment or distribution" of food. Without a comma before "or," drivers argued "packing for shipment or distribution" was one activity (packing either kind) — so distribution itself wasn't exempt, and they deserved overtime. The court agreed the sentence was ambiguous; the settlement cost the dairy ~$5 million. Maine later rewrote the statute with semicolons.
+
+**Classic ambiguity examples:**
+
+- *"I'd like to thank my parents, Ayn Rand and God"* — reads as if Ayn Rand and God are your parents. Oxford comma saves it: "my parents, Ayn Rand, and God."
+- *"We invited the dancers, JFK and Stalin"* — same structure, same problem.
+
+**Where the Oxford comma hurts:** appositives flip the ambiguity — "She wrote to her friend, a doctor, and a lawyer" (is the friend the doctor?). So it's not a universal fix.
+
+**Verdict:** most serial commas never change meaning — but in lists with appositives or compound final items, the comma decides the parse. Consistency matters most: pick a house style and apply it, but rewrite any sentence where either reading survives.`
+  },
+  {
+    subjectId: 'english',
+    title: 'How do I know if my thesis statement is too weak?',
+    body: 'My essay got marked down for a "weak thesis" but it does state my topic. What makes a thesis weak vs strong?',
+    tags: ['essay-writing', 'thesis'],
+    author: 'Omar B.',
+    answer: `A weak thesis announces; a strong thesis *argues*. Run yours through three tests:
+
+**Test 1 — The "so what" test.** Could a reasonable person disagree? "Social media is popular" fails (nobody argues otherwise). "Social media's algorithm design, not user weakness, drives compulsive use" passes — it takes a side in a real debate.
+
+**Test 2 — The specificity test.** Does it name *what* and *why*, not just the topic? Weak: "This essay discusses the causes of the Civil War." Strong: "The Civil War's deepest cause was the economic incompatibility of free and enslaved labor, not a dispute over states' rights as commonly framed." Notice it forecasts your argument structure too.
+
+**Test 3 — The scope test.** Can you actually prove it in the space you have? "War is bad" needs a library; "Sherman's march doctrine prioritized infrastructure over casualties" fits an essay.
+
+**Quick formula for upgrading:** [debatable claim] because [2-3 reasons you'll prove]. The "because" forces specifics — if you can't finish the sentence, the claim is still an observation, not an argument.
+
+**Red flags the grader spotted:** starting with "I think" (weakens conviction), announcing instead of arguing ("This paper will explore…"), and restating a fact everyone already accepts.`
+  },
+  {
+    subjectId: 'humanities',
+    title: 'Why did WWI start from one assassination — was Franz Ferdinand really that important?',
+    body: 'One archduke dies and the whole world goes to war? I don\'t get how a single event in Sarajevo caused a world war — were they just looking for an excuse?',
+    tags: ['history', 'ww1', 'causes'],
+    author: 'Jess T.',
+    answer: `Exactly right to be suspicious — historians treat the assassination as the **spark**, not the cause. The powder was packed for decades:
+
+**The powder keg (long-term causes — M.A.I.N.):**
+
+- **Militarism:** decades of arms races (Anglo-German naval rivalry especially) made war feel winnable and timetables feel urgent.
+- **Alliances:** the continent was pre-committed — Germany+AH vs France+Russia+Britain. A dispute between two powers auto-involved six.
+- **Imperialism:** competition for colonies had already generated crises (Morocco 1905/1911, Balkan wars 1912-13) that everyone survived and learned nothing from.
+- **Nationalism:** Serbia's growth ambitions directly threatened Austria-Hungary's multi-ethnic empire — Franz Ferdinand was shot by a Bosnian Serb nationalist.
+
+**Why the spark caught:** Austria-Hungary saw the assassination as a chance to crush Serbia before it grew — the "preventive war" logic. Germany issued the "blank check" (support whatever AH did). Russia mobilized to defend Serbia; Germany's own war plan (Schlieffen) required beating France *first* and fast, so mobilization automatically meant invading Belgium → Britain in.
+
+**The takeaway:** nobody in June 1914 planned a world war; the system was built so that any local crisis cascaded. That's why "was the archduke that important" is the wrong frame — the alliance logic, war plans, and timetables did the killing. Lesson historians still use: **interlocking commitments convert small crises into large ones.**`
+  },
+  {
+    subjectId: 'humanities',
+    title: 'What actually ended the Great Depression — the New Deal or WWII?',
+    body: 'Half my sources credit FDR\'s New Deal, half credit WWII spending. Can both be right, and does it matter for how we think about recessions today?',
+    tags: ['history', 'great-depression', 'economics'],
+    author: 'Alex V.',
+    answer: `Both are right about different things — they solved different halves of the problem.
+
+**What the New Deal did (1933–1938):** ended the *collapse*. Bank holiday + FDIC stopped the runs; abandoning the gold standard let prices recover; relief programs (CCC, WPA) cut unemployment from ~25% to ~14%; Social Security and the SEC rebuilt institutional trust. But GDP in 1940 was still below trend and unemployment ~15% — the New Deal stabilized, it didn't finish the job.
+
+**What WWII did (1941–1945):** delivered the *full recovery*. Federal spending exploded to ~40% of GDP — unemployment fell under 2%, factories ran triple shifts, and households accumulated savings that fueled the postwar boom. It was Keynesian stimulus at a scale no peacetime Congress would have passed.
+
+**The nuance historians add:** it wasn't "war" per se — it was *deficit spending*. The 1937 recession proved the point in reverse: when FDR tightened budgets early, the economy re-collapsed. Countries that spent big earliest (e.g., Sweden, and Germany for worse reasons) recovered fastest; gold-standard holdouts (France) lagged longest.
+
+**Why it matters now:** it's the core evidence for fiscal stimulus in crises — the 2008 bailouts/stimulus and 2020 relief debates both run on this argument. The modern refinement: speed and scale matter more than the spending's form, and premature austerity can undo the gains (1937 is still cited every time someone proposes cutting stimulus early).`
+  },
+  {
+    subjectId: 'computing',
+    title: 'What does Big-O actually ignore, and why does O(n) sometimes beat O(log n)?',
+    body: 'I learned O(log n) always beats O(n), but my professor said a linear scan through an array can be faster than binary search on real machines for small data. Contradiction?',
+    tags: ['big-o', 'algorithms', 'complexity'],
+    author: 'Kai Z.',
+    answer: `No contradiction — Big-O describes **growth**, not speed. It deliberately throws away two things: constant factors and small inputs.
+
+**What O() ignores:**
+
+- **Constants.** $100n$ and $n$ are both $O(n)$; $0.001n \\log n$ beats $10n$ at any size, but the chart won't tell you.
+- **Small n.** Asymptotics only "win" past some crossover point — often far larger than real data.
+- **Hardware reality.** Cache lines, branch prediction, memory allocation — none appear in the notation.
+
+**Why linear scan beats binary search in practice:**
+
+1. Binary search per step: pointer arithmetic, a comparison, an unpredictable branch (mispredict ~50% → pipeline flush), and random memory access (cache miss).
+2. Linear scan per element: sequential memory (prefetcher-friendly — CPUs fetch whole cache lines), predictable loop, simple comparison. A modern CPU can check several dozen *adjacent* elements in the time of one random-access miss.
+3. Result: on arrays under ~a few hundred elements, the linear scan's lower per-element cost wins — the crossover where $O(\\log n)$ pulls ahead is real but further out than textbook diagrams suggest.
+
+**How to use this correctly:** Big-O still decides *architecture* — quadratic vs. linear at millions of rows is non-negotiable. But at the micro level, profile real data on real hardware; constants and cache behavior own that territory. Your professor is right, and so is your textbook — they're answering different questions.`
   }
 ];
