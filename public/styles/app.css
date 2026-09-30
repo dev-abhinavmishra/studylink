@@ -353,6 +353,19 @@ a.card-link:hover .card-title { color: var(--primary-ink); }
 .lesson-row .lr-title { font-weight: 600; font-size: .95rem; }
 .lesson-row .lr-sub { font-size: .79rem; color: var(--muted); }
 .lesson-row .lr-right { margin-left: auto; display: flex; align-items: center; gap: 10px; flex: none; }
+.lesson-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.m-dot.done { background: var(--m-mastered); color: #fff; width: 18px; height: 18px; display: inline-grid; place-items: center; }
+.done-flag { color: var(--m-mastered); font-weight: 700; display: inline-flex; align-items: center; gap: 3px; }
+.btn.done, .btn-outline.done { border-color: var(--m-mastered); color: var(--m-mastered); cursor: default; }
+.bkm-btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); border-radius: 99px; padding: 6px 13px; font-size: .8rem; font-weight: 600; cursor: pointer; transition: .15s; flex: none; }
+.bkm-btn:hover { border-color: var(--primary-border); color: var(--primary-ink); transform: translateY(-1px); }
+.bkm-btn.saved { background: var(--amber-soft); border-color: var(--amber); color: var(--amber-deep); }
+.bkm-btn.saved .icn path { fill: currentColor; }
+.course-progress { max-width: 480px; }
+.upnext { border: 1px solid var(--primary-border); display: block; }
+.upnext-badge { display: inline-flex; align-items: center; gap: 5px; border-radius: 99px; padding: 4px 11px; font-size: .74rem; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; flex: none; }
+.bkm-row { border: none; border-bottom: 1px solid var(--border); border-radius: 0; padding: 11px 16px; }
+.bkm-row:last-child { border-bottom: none; }
 .unit-block { margin-bottom: 26px; }
 .unit-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 12px; }
 .unit-head h3 { margin: 0; }

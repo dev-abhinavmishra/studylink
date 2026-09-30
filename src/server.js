@@ -93,30 +93,42 @@ function publicUser(u) {
 
 // ---------- content shaping ----------------------------------------------
 
-function lessonWithProgress(lesson, prog) {
+function lessonWithProgress(lesson, prog, visits) {
   const s = lesson.skill;
   const p = s ? prog.get(s.id) : null;
+  const v = visits ? visits.get(lesson.id) : null;
   return {
     id: lesson.id,
     title: lesson.title,
     minutes: lesson.minutes || 6,
     summary: lesson.summary || '',
     skill: s ? { id: s.id, name: s.name } : null,
-    mastery: p ? p.level : null
+    mastery: p ? p.level : null,
+    completed: !!(v && v.completed),
+    visited: !!v
   };
 }
 
-function courseDetail(course, prog) {
+function visitMap(userId) {
+  if (!userId) return new Map();
+  const rows = db.prepare('SELECT lesson_id, completed, visited_at FROM lesson_visits WHERE user_id = ?').all(userId);
+  return new Map(rows.map((r) => [r.lesson_id, r]));
+}
+
+function courseDetail(course, prog, visits) {
+  const lessons = course.units.flatMap((u) => u.lessons.map((l) => lessonWithProgress(l, prog, visits)));
+  const done = lessons.filter((l) => l.completed).length;
   return {
     id: course.id,
     title: course.title,
     subtitle: course.subtitle,
     summary: course.summary,
     ...courseStats(course),
+    progress: { done, total: lessons.length },
     units: course.units.map((unit) => ({
       id: unit.id,
       title: unit.title,
-      lessons: unit.lessons.map((l) => lessonWithProgress(l, prog))
+      lessons: unit.lessons.map((l) => lessonWithProgress(l, prog, visits))
     }))
   };
 }
@@ -209,7 +221,7 @@ app.get('/api/courses/:id', (req, res) => {
   const prog = progressMap(req.session.userId);
   res.json({
     subject: { id: hit.subject.id, name: hit.subject.name, color: hit.subject.color },
-    course: courseDetail(hit.course, prog)
+    course: courseDetail(hit.course, prog, visitMap(req.session.userId))
   });
 });
 
@@ -222,6 +234,9 @@ app.get('/api/lessons/:id', (req, res) => {
   const i = flat.findIndex((l) => l.id === lesson.id);
   const prog = progressMap(req.session.userId);
   const p = lesson.skill ? prog.get(lesson.skill.id) : null;
+  const uid = req.session.userId;
+  const visit = uid ? db.prepare('SELECT completed FROM lesson_visits WHERE user_id = ? AND lesson_id = ?').get(uid, lesson.id) : null;
+  const bookmarked = uid ? !!db.prepare('SELECT 1 FROM bookmarks WHERE user_id = ? AND lesson_id = ?').get(uid, lesson.id) : false;
   res.json({
     subject: { id: subject.id, name: subject.name, color: subject.color },
     course: { id: course.id, title: course.title },
@@ -229,6 +244,7 @@ app.get('/api/lessons/:id', (req, res) => {
     lesson: {
       id: lesson.id, title: lesson.title, minutes: lesson.minutes,
       summary: lesson.summary, tags: lesson.tags, blocks: lesson.blocks,
+      completed: !!(visit && visit.completed), bookmarked,
       skill: lesson.skill ? { id: lesson.skill.id, name: lesson.skill.name, mastery: p ? p.level : null } : null
     },
     prev: i > 0 ? { id: flat[i - 1].id, title: flat[i - 1].title } : null,
@@ -356,12 +372,44 @@ app.post('/api/lessons/:id/visit', (req, res) => {
 });
 
 app.post('/api/lessons/:id/complete', (req, res) => {
-  if (!req.session.userId) return res.json({ ok: true, guest: true });
+  if (!lessonIndex.has(req.params.id)) return res.status(404).json({ error: 'Lesson not found' });
+  const uid = req.session.userId;
+  if (!uid) return res.json({ ok: true, guest: true });
+  const wasDone = db.prepare('SELECT completed FROM lesson_visits WHERE user_id = ? AND lesson_id = ?').get(uid, req.params.id);
   db.prepare(`INSERT INTO lesson_visits (user_id, lesson_id, completed) VALUES (?,?,1)
     ON CONFLICT (user_id, lesson_id) DO UPDATE SET completed = 1, visited_at = datetime('now')`)
-    .run(req.session.userId, req.params.id);
-  res.json({ ok: true });
+    .run(uid, req.params.id);
+  const xpAwarded = wasDone?.completed ? 0 : 5; // completing a lesson pays once
+  if (xpAwarded) awardXp(uid, xpAwarded);
+  res.json({ ok: true, xpAwarded });
 });
+
+app.post('/api/lessons/:id/bookmark', requireAuth, (req, res) => {
+  if (!lessonIndex.has(req.params.id)) return res.status(404).json({ error: 'Lesson not found' });
+  const uid = req.session.userId;
+  const existing = db.prepare('SELECT 1 FROM bookmarks WHERE user_id = ? AND lesson_id = ?').get(uid, req.params.id);
+  if (existing) {
+    db.prepare('DELETE FROM bookmarks WHERE user_id = ? AND lesson_id = ?').run(uid, req.params.id);
+    return res.json({ bookmarked: false });
+  }
+  db.prepare('INSERT INTO bookmarks (user_id, lesson_id) VALUES (?,?)').run(uid, req.params.id);
+  res.json({ bookmarked: true });
+});
+
+app.get('/api/bookmarks', requireAuth, (req, res) => {
+  const rows = db.prepare('SELECT lesson_id, created_at FROM bookmarks WHERE user_id = ? ORDER BY created_at DESC').all(req.session.userId);
+  res.json({ bookmarks: rows.map((r) => ({ ...lessonBrief(r.lesson_id), savedAt: r.created_at })).filter((b) => b.lessonId) });
+});
+
+function lessonBrief(lessonId) {
+  const hit = lessonIndex.get(lessonId);
+  if (!hit) return { lessonId: null };
+  return {
+    lessonId, title: hit.lesson.title, minutes: hit.lesson.minutes || 6,
+    courseId: hit.course.id, courseTitle: hit.course.title,
+    subjectId: hit.subject.id, subjectColor: hit.subject.color
+  };
+}
 
 // Merge guest (localStorage) progress after signup/login.
 app.post('/api/progress/import', requireAuth, (req, res) => {
@@ -409,6 +457,39 @@ app.get('/api/dashboard', requireAuth, (req, res) => {
       completed: !!r.completed
     };
   }).filter(Boolean);
+
+  // "Up next": the first incomplete lesson in the course the user touched most
+  // recently; if that course is done, the first course with untouched skills.
+  const visits = visitMap(uid);
+  let upNext = null;
+  const recentHit = recent.length ? lessonIndex.get(recent[0].lesson_id) : null;
+  if (recentHit) {
+    const flat = recentHit.course.units.flatMap((un) => un.lessons);
+    const pending = flat.find((l) => !visits.get(l.id)?.completed);
+    if (pending && pending.id !== recent[0].lesson_id) {
+      upNext = { lessonId: pending.id, title: pending.title, courseId: recentHit.course.id, courseTitle: recentHit.course.title, subjectColor: recentHit.subject.color, minutes: pending.minutes || 6 };
+    }
+  }
+  if (!upNext) {
+    outer:
+    for (const s of subjects) {
+      for (const c of s.courses) {
+        const flat = c.units.flatMap((un) => un.lessons);
+        const pending = flat.find((l) => !visits.get(l.id)?.completed);
+        if (pending && (visits.has(flat[0].id) || c === subjects[0].courses[0])) {
+          upNext = { lessonId: pending.id, title: pending.title, courseId: c.id, courseTitle: c.title, subjectColor: s.color, minutes: pending.minutes || 6 };
+          break outer;
+        }
+      }
+    }
+  }
+  if (!upNext) {
+    const first = subjects[0]?.courses[0]?.units?.[0]?.lessons?.[0];
+    if (first) upNext = { lessonId: first.id, title: first.title, courseId: subjects[0].courses[0].id, courseTitle: subjects[0].courses[0].title, subjectColor: subjects[0].color, minutes: first.minutes || 6 };
+  }
+
+  const bookmarkRows = db.prepare('SELECT lesson_id FROM bookmarks WHERE user_id = ? ORDER BY created_at DESC LIMIT 6').all(uid);
+  const bookmarks = bookmarkRows.map((r) => lessonBrief(r.lesson_id)).filter((b) => b.lessonId);
   const bySubject = subjects.map((s) => {
     let total = 0; let mastered = 0; let touched = 0;
     for (const c of s.courses) {
@@ -434,7 +515,7 @@ app.get('/api/dashboard', requireAuth, (req, res) => {
     user: publicUser(u),
     xp, level: levelFromXp(xp), streakDays: streakDays(uid),
     xpToNext: (levelFromXp(xp) * (levelFromXp(xp) + 1) * 50) - xp,
-    continueLearning, bySubject, recentAttempts, weekly
+    continueLearning, bySubject, recentAttempts, weekly, upNext, bookmarks
   });
 });
 

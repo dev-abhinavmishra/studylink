@@ -91,6 +91,13 @@ CREATE TABLE IF NOT EXISTS votes (
   PRIMARY KEY (user_id, target_type, target_id)
 );
 
+CREATE TABLE IF NOT EXISTS bookmarks (
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  lesson_id TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (user_id, lesson_id)
+);
+
 CREATE TABLE IF NOT EXISTS coach_threads (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,

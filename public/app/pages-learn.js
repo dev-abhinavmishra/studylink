@@ -74,6 +74,14 @@ export function pageCourse(subject, course) {
         <span class="badge badge-muted">${esc(course.subtitle || '')}</span>
         <span class="badge badge-muted">${course.lessons} lessons</span>
       </div>
+      ${course.progress?.done ? `
+        <div class="course-progress mt-2">
+          <div class="flex aic jcsb small mb-1">
+            <span><b>${course.progress.done}</b> of ${course.progress.total} lessons completed</span>
+            <span class="muted">${Math.round(100 * course.progress.done / course.progress.total)}%</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" style="width:${Math.round(100 * course.progress.done / course.progress.total)}%;background:${subject.color}"></div></div>
+        </div>` : ''}
     </div>
     ${course.units.map((u, ui) => `
       <div class="unit-block">
@@ -85,13 +93,13 @@ export function pageCourse(subject, course) {
         <div class="grid">
           ${u.lessons.map((l) => `
             <a class="lesson-row" href="/learn/${course.id}/${l.id}" data-nav>
-              ${masteryDot(l.mastery)}
+              ${l.completed ? `<span class="m-dot done" title="Completed">${icon('check', 9)}</span>` : masteryDot(l.mastery)}
               <div>
                 <div class="lr-title">${esc(l.title)}</div>
                 <div class="lr-sub">${esc(l.summary)}</div>
               </div>
               <div class="lr-right">
-                ${l.mastery ? masteryTag(l.mastery) : ''}
+                ${l.completed ? '<span class="mastery-tag" data-level="mastered">Done</span>' : (l.mastery ? masteryTag(l.mastery) : '')}
                 <span class="muted small">${icon('clock', 13)} ${l.minutes}m</span>
                 ${icon('arrowR', 16)}
               </div>
@@ -109,8 +117,9 @@ export function pageLesson(data) {
       ${crumbs([{ label: subject.name, href: `/subjects/${subject.id}` }, { label: course.title, href: `/course/${course.id}` }, { label: lesson.title }])}
       <div class="flex aic jcsb">
         <h1 style="margin-bottom:4px">${esc(lesson.title)}</h1>
+        <button class="bkm-btn ${lesson.bookmarked ? 'saved' : ''}" id="bkmBtn" title="${lesson.bookmarked ? 'Remove bookmark' : 'Save for later'}" aria-label="Bookmark lesson" aria-pressed="${lesson.bookmarked ? 'true' : 'false'}">${icon('bookmark', 17)}<span class="bkm-lbl">${lesson.bookmarked ? 'Saved' : 'Save'}</span></button>
       </div>
-      <div class="muted small">${esc(unit.title)} · ${icon('clock', 12)} ${lesson.minutes || 6} min read${lesson.mastery ? ` · ` : ''}</div>
+      <div class="muted small">${esc(unit.title)} · ${icon('clock', 12)} ${lesson.minutes || 6} min read${lesson.completed ? ` · <span class="done-flag">${icon('check', 11)} completed</span>` : ''}</div>
     </div>
     <article class="card card-pad prose fade-in" style="padding:34px">
       ${renderBlocks(lesson.blocks)}
@@ -124,8 +133,9 @@ export function pageLesson(data) {
         </div>
         <a class="btn btn-amber" href="/practice/${lesson.skill.id}" data-nav>Start practicing ${icon('arrowR', 15)}</a>
       </div>` : ''}
-    <div class="flex jcsb mt-3">
+    <div class="lesson-foot mt-3">
       ${prev ? `<a class="btn btn-outline" href="/learn/${course.id}/${prev.id}" data-nav>${icon('arrowL', 15)} ${esc(prev.title)}</a>` : '<span></span>'}
+      <button class="btn ${lesson.completed ? 'btn-outline done' : 'btn-primary'}" id="completeBtn">${lesson.completed ? `${icon('check', 15)} Completed` : `${icon('check', 15)} Mark as complete`}</button>
       ${next ? `<a class="btn btn-outline" href="/learn/${course.id}/${next.id}" data-nav>${esc(next.title)} ${icon('arrowR', 15)}</a>` : `<a class="btn btn-outline" href="/course/${course.id}" data-nav>Back to course ${icon('check', 15)}</a>`}
     </div>
   </div>`;
@@ -133,6 +143,32 @@ export function pageLesson(data) {
 
 export async function wireLesson(lessonId) {
   try { await api('POST', `/api/lessons/${lessonId}/visit`); } catch { /* guest */ }
+  const bkm = document.getElementById('bkmBtn');
+  if (bkm) bkm.onclick = async () => {
+    try {
+      const r = await api('POST', `/api/lessons/${lessonId}/bookmark`);
+      bkm.classList.toggle('saved', !!r.bookmarked);
+      bkm.setAttribute('aria-pressed', r.bookmarked ? 'true' : 'false');
+      bkm.querySelector('.bkm-lbl').textContent = r.bookmarked ? 'Saved' : 'Save';
+      if (r.bookmarked) toast('Saved — find it on your dashboard', '');
+    } catch {
+      toast('Sign up free to save lessons', '');
+    }
+  };
+  const done = document.getElementById('completeBtn');
+  if (done && !done.classList.contains('done')) done.onclick = async () => {
+    try {
+      const r = await api('POST', `/api/lessons/${lessonId}/complete`);
+      if (r.guest) { toast('Sign up free to track progress', ''); return; }
+      done.classList.add('done');
+      done.className = 'btn btn-outline done';
+      done.innerHTML = `${icon('check', 15)} Completed`;
+      if (r.xpAwarded) { toast(`+${r.xpAwarded} XP — lesson complete`, 'xp'); window.dispatchEvent(new Event('lumina:nav-refresh')); }
+      else toast('Marked complete', '');
+    } catch (e) {
+      toast(e.message || 'Could not save that', '');
+    }
+  };
 }
 
 // ---------- practice engine -------------------------------------------------
@@ -329,6 +365,17 @@ export function pageDashboard(d) {
 
     <div class="grid" style="grid-template-columns:1.4fr .9fr;gap:28px;align-items:start">
       <div>
+        ${d.upNext ? `
+        <a class="card card-pad upnext card-link mb-3" href="/learn/${d.upNext.courseId}/${d.upNext.lessonId}" data-nav>
+          <div class="flex aic gap-2">
+            <span class="upnext-badge" style="background:${d.upNext.subjectColor}1a;color:${d.upNext.subjectColor}">${icon('play', 15)} Up next</span>
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:700">${esc(d.upNext.title)}</div>
+              <div class="muted small">${esc(d.upNext.courseTitle)} · ${icon('clock', 11)} ${d.upNext.minutes} min</div>
+            </div>
+            <span class="muted">${icon('arrowR', 17)}</span>
+          </div>
+        </a>` : ''}
         <h2>Continue learning</h2>
         ${d.continueLearning.length ? `<div class="grid">${d.continueLearning.map((c) => `
           <a class="lesson-row" href="/learn/${c.courseId}/${c.lessonId}" data-nav>
@@ -359,6 +406,16 @@ export function pageDashboard(d) {
           </div>
           <div class="muted small mt-2" style="text-align:center">Daily XP, last ${weekly.length} days</div>
         </div>
+        ${d.bookmarks?.length ? `
+        <h2 class="mt-3">Saved for later</h2>
+        <div class="card mb-3">
+          ${d.bookmarks.map((b) => `
+            <a class="lesson-row bkm-row" href="/learn/${b.courseId}/${b.lessonId}" data-nav>
+              <span class="m-dot" style="background:${b.subjectColor}"></span>
+              <div><div class="lr-title">${esc(b.title)}</div><div class="lr-sub">${esc(b.courseTitle)} · ${b.minutes} min</div></div>
+              <div class="lr-right">${icon('arrowR', 15)}</div>
+            </a>`).join('')}
+        </div>` : ''}
         <h2>Recent activity</h2>
         <div class="card">
           ${d.recentAttempts.length ? d.recentAttempts.map((a) => `

@@ -17,10 +17,13 @@ function renderMath(tex, display) {
 }
 
 export function inlineMd(text) {
-  let s = esc(String(text));
-  // math first ($...$ and $$...$$) — work on escaped text; $ survives escaping
+  // Escaped dollars (\$) are literal currency, never math delimiters.
+  let s = esc(String(text)).replace(/\\\$/g, '@@LUMDOLLAR@@');
+  // math first ($...$ and $$...$$) — work on escaped text; $ survives escaping.
+  // A close-$ preceded by space, or followed by a digit, is currency not math.
   s = s.replace(/\$\$([^$]+)\$\$/g, (_, m) => renderMath(m, true));
-  s = s.replace(/\$([^$\n]+)\$/g, (_, m) => renderMath(m, false));
+  s = s.replace(/\$([^\s$](?:[^$\n]*?[^\s$])?)\$(?!\d)/g, (_, m) => renderMath(m, false));
+  s = s.replace(/@@LUMDOLLAR@@/g, '$');
   s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
   s = s.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
   s = s.replace(/`([^`\n]+)`/g, '<code>$1</code>');
