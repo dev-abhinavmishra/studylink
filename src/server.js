@@ -551,14 +551,16 @@ app.get('/api/dashboard', requireAuth, (req, res) => {
 // ---------- homework help (Q&A) --------------------------------------------
 
 function seedQuestions() {
-  const count = db.prepare('SELECT COUNT(*) AS n FROM questions').get().n;
-  if (count > 0) return;
+  // Idempotent per-title seeding: new seeds added to content/qa.js reach
+  // existing databases without touching user-generated questions.
+  const exists = db.prepare('SELECT id FROM questions WHERE title = ?');
   const insQ = db.prepare(`INSERT INTO questions (author_name, is_expert, title, body, subject_id, tags, views, votes, created_at)
     VALUES (?,?,?,?,?,?,?,?, datetime('now', ?))`);
   const insA = db.prepare(`INSERT INTO answers (question_id, author_name, is_expert, body, votes, created_at)
     VALUES (?,?,?,?,?, datetime('now', ?))`);
   const setAcc = db.prepare('UPDATE questions SET accepted_answer_id = ? WHERE id = ?');
   qaSeed.forEach((q, i) => {
+    if (exists.get(q.title)) return;
     const mins = -(60 * (i + 3));
     const qi = insQ.run(q.author || 'Student', 0, q.title, q.body, q.subjectId, JSON.stringify(q.tags || []),
       50 + Math.floor(Math.random() * 400), Math.floor(Math.random() * 12) + 1, `${mins} minutes`);
