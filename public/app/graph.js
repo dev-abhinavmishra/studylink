@@ -92,6 +92,16 @@ function draw(cv, cfg, vals) {
   });
 }
 
+// Repaint mounted widgets when the theme flips — canvas colors come from
+// CSS vars, so a theme change must trigger a fresh draw.
+const liveDraws = new Set();
+let themeObserver = null;
+function watchTheme() {
+  if (themeObserver) return;
+  themeObserver = new MutationObserver(() => liveDraws.forEach((fn) => fn()));
+  themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+}
+
 export function mountGraphs(root = document) {
   root.querySelectorAll('.lgraph').forEach((el) => {
     let cfg;
@@ -116,6 +126,8 @@ export function mountGraphs(root = document) {
       const eq = el.querySelector('#leq');
       if (eq) eq.textContent = `f(x) = ${prettyExpr(cfg.expr, vals)}`;
     };
+    liveDraws.add(redraw);
+    watchTheme();
     el.querySelectorAll('input[type=range]').forEach((inp) => {
       inp.addEventListener('input', () => {
         const v = parseFloat(inp.value);

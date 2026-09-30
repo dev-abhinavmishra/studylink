@@ -379,6 +379,7 @@ export async function startChallenge(courseId) {
     return;
   }
   challenge.qs = d.questions;
+  challenge.unit = d.course.unit ? d.course.unit.index : null;
   const t = document.getElementById('chTitle');
   if (t) t.textContent = d.course.unit ? `${d.course.title} — Unit ${d.course.unit.index + 1} test` : `${d.course.title} — challenge`;
   renderChallengeQ();
@@ -516,7 +517,7 @@ function renderChallengeResults() {
       <h2 class="mt-2">${right} of ${total} correct${challenge.xp ? ` · +${challenge.xp} XP` : ''}</h2>
       <p class="muted" style="max-width:46ch;margin:8px auto 0">${verdict}</p>
       <div class="flex gap-2 mt-4" style="justify-content:center;flex-wrap:wrap">
-        <a class="btn btn-primary" href="/challenge/${challenge.courseId}" data-nav>Retake challenge</a>
+        <a class="btn btn-primary" href="/challenge/${challenge.courseId}${challenge.unit != null ? `?unit=${challenge.unit}` : ''}" data-nav>Retake challenge</a>
         <a class="btn btn-outline" href="/course/${challenge.courseId}" data-nav>Back to course</a>
       </div>
     </div>
