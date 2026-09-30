@@ -148,6 +148,7 @@ export function pageLesson(data) {
     <article class="card card-pad prose fade-in" style="padding:34px">
       ${renderBlocks(lesson.blocks)}
     </article>
+    <div class="card card-pad mt-3" id="checkHost" hidden></div>
     ${lesson.skill ? `
       <div class="card card-pad mt-3" style="border-left:4px solid var(--amber);display:flex;align-items:center;gap:18px;flex-wrap:wrap">
         <span style="width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:var(--amber-soft);color:var(--amber-deep)">${icon('target', 22)}</span>
@@ -165,8 +166,9 @@ export function pageLesson(data) {
   </div>`;
 }
 
-export async function wireLesson(lessonId) {
+export async function wireLesson(lessonId, skillId) {
   mountGraphs();
+  if (skillId) mountCheck(skillId);
   try { await api('POST', `/api/lessons/${lessonId}/visit`); } catch { /* guest */ }
   const bkm = document.getElementById('bkmBtn');
   if (bkm) bkm.onclick = async () => {
@@ -194,6 +196,102 @@ export async function wireLesson(lessonId) {
     } catch (e) {
       toast(e.message || 'Could not save that', '');
     }
+  };
+}
+
+// Embedded spot-check at the bottom of a lesson — a single real question from
+// the lesson's skill, graded through the same single-use pipeline as practice.
+async function mountCheck(skillId) {
+  const host = document.getElementById('checkHost');
+  if (!host) return;
+  let item;
+  try {
+    item = await api('GET', `/api/skills/${skillId}/question`);
+  } catch { return; }
+  const q = item.question;
+  host.hidden = false;
+  host.classList.add('fade-in');
+  let answered = false;
+  host.innerHTML = `
+    <div class="flex aic gap-2 mb-2">
+      <span class="badge badge-expert">${icon('target', 12)} Check your understanding</span>
+      <span class="muted small">one quick question before you move on</span>
+    </div>
+    <div class="q-prompt">${inlineMd(q.prompt)}</div>
+    ${q.type === 'choice' ? `
+      <div class="choice-list" id="ckList">
+        ${q.choices.map((c) => `<button class="choice" data-id="${c.id}"><span class="choice-letter">${c.id}</span><span>${inlineMd(c.text)}</span></button>`).join('')}
+      </div>` : `
+      <div class="numeric-row">
+        <input class="input" id="ckNum" placeholder="Your answer…" autocomplete="off" ${q.type === 'numeric' ? 'inputmode="decimal"' : ''}>
+        <button class="btn btn-primary" id="ckGo">Check</button>
+      </div>`}
+    <div id="ckFb"></div>
+    <div class="flex aic gap-2 mt-3">
+      ${q.hint ? `<button class="btn btn-ghost btn-sm" id="ckHint">${icon('lightbulb', 14)} Hint</button>` : ''}
+      <a class="btn btn-ghost btn-sm" href="/practice/${skillId}" data-nav style="margin-left:auto">More practice ${icon('arrowR', 13)}</a>
+    </div>
+    <div id="ckHintHost"></div>`;
+
+  const submit = async (answer) => {
+    if (answered || answer == null || answer === '') return;
+    answered = true;
+    let res;
+    try {
+      res = await api('POST', `/api/skills/${skillId}/answer`, { qid: item.qid, answer });
+    } catch (e) {
+      answered = false;
+      toast(e.message || 'Could not check that answer', '');
+      return;
+    }
+    if (res.guest) recordGuestAttempt(skillId, res.correct);
+    if (q.type === 'choice') {
+      host.querySelectorAll('.choice').forEach((btn) => {
+        btn.disabled = true;
+        const isAnswer = btn.dataset.id === res.reveal?.answer;
+        const picked = btn.dataset.id === answer;
+        if (isAnswer) btn.classList.add('correct');
+        else if (picked) btn.classList.add('wrong');
+        else btn.classList.add('dim');
+      });
+    } else {
+      const inp = host.querySelector('#ckNum');
+      inp.disabled = true;
+      host.querySelector('#ckGo').disabled = true;
+      inp.style.borderColor = res.correct ? 'var(--green)' : 'var(--red)';
+    }
+    const steps = res.reveal?.steps || [];
+    host.querySelector('#ckFb').innerHTML = `
+      <div class="feedback ${res.correct ? 'ok' : 'no'}">
+        ${icon(res.correct ? 'check' : 'x', 17)}
+        <span>${res.correct
+          ? `Correct${res.progress?.xpAwarded ? ` — +${res.progress.xpAwarded} XP` : ''} — nice, keep going`
+          : `Not quite — the answer was <b>&nbsp;${inlineMd(res.reveal?.answerText ?? String(res.reveal?.answer ?? ''))}</b>`}</span>
+      </div>
+      ${steps.length ? `
+        <div class="steps-box">
+          <div class="steps-head">${icon('book', 14)} Worked solution</div>
+          ${steps.map((s, i) => `<div class="step"><span class="step-n">${i + 1}</span>${inlineMd(s)}</div>`).join('')}
+        </div>` : ''}
+      <div class="flex mt-3" style="justify-content:flex-end">
+        <a class="btn ${res.correct ? 'btn-outline' : 'btn-primary'} btn-sm" href="/practice/${skillId}" data-nav>${res.correct ? 'Keep practicing' : 'Practice this skill'} ${icon('arrowR', 13)}</a>
+      </div>`;
+    if (res.progress?.xpAwarded) window.dispatchEvent(new Event('lumina:nav-refresh'));
+  };
+
+  if (q.type === 'choice') {
+    host.querySelectorAll('.choice').forEach((btn) => {
+      btn.onclick = () => submit(btn.dataset.id);
+    });
+  } else {
+    const inp = host.querySelector('#ckNum');
+    inp.focus();
+    inp.onkeydown = (e) => { if (e.key === 'Enter') submit(inp.value); };
+    host.querySelector('#ckGo').onclick = () => submit(inp.value);
+  }
+  const hintBtn = host.querySelector('#ckHint');
+  if (hintBtn) hintBtn.onclick = () => {
+    host.querySelector('#ckHintHost').innerHTML = `<div class="hint-box">${icon('lightbulb', 14)} ${inlineMd(q.hint)}</div>`;
   };
 }
 

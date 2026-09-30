@@ -63,7 +63,7 @@ async function route() {
       const [, , courseId, lessonId] = path.split('/');
       const d = await api('GET', `/api/lessons/${lessonId}`);
       page = pageLesson(d);
-      wire = () => wireLesson(lessonId);
+      wire = () => wireLesson(lessonId, d.lesson.skill?.id);
       title = `${d.lesson.title} · Lumina`;
     } else if (path.match(/^\/practice\/[^/]+$/)) {
       const skillId = path.split('/')[2];

@@ -623,3 +623,18 @@ a.card-link:hover .card-title { color: var(--primary-ink); }
 }
 
 .math-raw { font-family: var(--font-mono); font-size: .9em; background: var(--bg-soft); padding: 1px 5px; border-radius: 4px; }
+
+/* ---------- print: lessons & answers as study sheets ---------- */
+@media print {
+  .nav, .footer, .lesson-foot, .bkm-btn, #checkHost,
+  .practice-shell > div:last-child, .btn, .vote-col, .lgraph-row,
+  .route-bar, .boot-splash, .hero-canvas, .toast-stack { display: none !important; }
+  body, .prose, .card { background: #fff !important; color: #1a1a1a !important; box-shadow: none !important; }
+  .card { border: 1px solid #ddd !important; }
+  .prose { font-size: 11.5pt; line-height: 1.6; }
+  h1, h2, h3 { color: #000 !important; }
+  .callout, .example-block, .steps-box { border: 1px solid #ccc !important; break-inside: avoid; }
+  .lgraph-cv { height: auto !important; }
+  .qa-row, .lesson-row, article { break-inside: avoid-page; }
+  @page { margin: 18mm 16mm; }
+}
