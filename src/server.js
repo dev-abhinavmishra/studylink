@@ -366,9 +366,12 @@ app.post('/api/skills/:id/answer', (req, res) => {
 app.get('/api/courses/:id/challenge', (req, res) => {
   const hit = courseIndex.get(req.params.id);
   if (!hit) return res.status(404).json({ error: 'Course not found' });
+  const unitIdx = req.query.unit != null ? parseInt(req.query.unit, 10) : null;
+  const units = unitIdx == null ? hit.course.units : [hit.course.units[unitIdx]].filter(Boolean);
+  if (!units.length) return res.status(404).json({ error: 'Unit not found' });
   const seen = new Set();
   const pool = [];
-  hit.course.units.forEach((u) => u.lessons.forEach((l) => {
+  units.forEach((u) => u.lessons.forEach((l) => {
     if (l.skill && !seen.has(l.skill.id)) {
       seen.add(l.skill.id);
       pool.push({ skill: l.skill, lesson: l, unit: u });
@@ -394,7 +397,10 @@ app.get('/api/courses/:id/challenge', (req, res) => {
     };
   }).filter(Boolean);
   res.json({
-    course: { id: hit.course.id, title: hit.course.title, subjectId: hit.subject.id },
+    course: {
+      id: hit.course.id, title: hit.course.title, subjectId: hit.subject.id,
+      unit: unitIdx != null ? { index: unitIdx, title: units[0]?.title } : null
+    },
     count: questions.length,
     questions
   });
@@ -553,18 +559,29 @@ app.get('/api/dashboard', requireAuth, (req, res) => {
   });
   const today = { xp: weekly[13].xp, goal: 50 };
 
-  // Suggested practice: weakest in-progress skills first, then untouched
-  // skills inside courses the user has already started.
+  // Suggested practice: stale mastered/proficient skills resurface for spaced
+  // review first (oldest first), then weakest in-progress skills, then
+  // untouched skills inside courses the user has already started.
   const suggested = [];
+  const stale = db.prepare(`SELECT skill_id, CAST(julianday('now') - julianday(updated_at) AS INTEGER) AS days
+    FROM skill_progress
+    WHERE user_id = ? AND level IN ('proficient','mastered') AND updated_at < datetime('now', '-3 days')
+    ORDER BY updated_at ASC LIMIT 3`).all(uid);
+  for (const row of stale) {
+    const hit = skillIndex.get(row.skill_id);
+    if (!hit) continue;
+    suggested.push({ skillId: row.skill_id, name: hit.skill.name, lessonTitle: hit.lesson.title, courseId: hit.course.id, level: 'review', streak: 0, kind: 'review', days: row.days });
+    if (suggested.length >= 3) break;
+  }
   const inProg = [...prog.entries()]
     .filter(([id, p]) => p.level !== 'mastered' && skillIndex.has(id))
     .map(([id, p]) => ({ id, p }));
   inProg.sort((a, b) => (a.p.streak - b.p.streak) || (a.p.correct - b.p.correct));
   for (const { id, p } of inProg) {
+    if (suggested.length >= 3) break;
     const hit = skillIndex.get(id);
     if (!hit) continue;
     suggested.push({ skillId: id, name: hit.skill.name, lessonTitle: hit.lesson.title, courseId: hit.course.id, level: p.level, streak: p.streak, kind: 'keep-going' });
-    if (suggested.length >= 3) break;
   }
   if (suggested.length < 3) {
     for (const c of [...courseIndex.values()].map((h) => h.course)) {

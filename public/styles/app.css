@@ -372,6 +372,9 @@ a.card-link:hover .card-title { color: var(--primary-ink); }
 .unit-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 12px; }
 .unit-head h3 { margin: 0; }
 .unit-head .unit-count { font-size: .8rem; color: var(--muted); }
+.unit-head .unit-count { margin-left: auto; }
+.unit-test-link { font-size: .82rem; font-weight: 700; color: var(--primary); display: inline-flex; align-items: center; gap: 4px; text-decoration: none; }
+.unit-test-link:hover { text-decoration: underline; }
 
 /* ---------- Q&A board ---------- */
 .qa-row { display: flex; gap: 16px; padding: 18px 20px; align-items: flex-start; }

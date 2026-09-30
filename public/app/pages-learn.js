@@ -93,6 +93,7 @@ export function pageCourse(subject, course) {
         <div class="unit-head">
           <span class="badge badge-muted">Unit ${ui + 1}</span>
           <h3>${esc(u.title)}</h3>
+          ${u.lessons.some((l) => l.skill) ? `<a class="unit-test-link" href="/challenge/${course.id}?unit=${ui}" data-nav>${icon('target', 13)} Unit test</a>` : ''}
           <span class="unit-count">${u.lessons.length} lessons</span>
         </div>
         <div class="grid">
@@ -369,14 +370,15 @@ export async function startChallenge(courseId) {
   const host = document.getElementById('chHost');
   let d;
   try {
-    d = await api('GET', `/api/courses/${courseId}/challenge`);
+    const unit = new URLSearchParams(location.search).get('unit');
+    d = await api('GET', `/api/courses/${courseId}/challenge${unit != null ? `?unit=${encodeURIComponent(unit)}` : ''}`);
   } catch (e) {
     host.innerHTML = emptyState('target', 'No challenge yet', e.message || 'This course has no practice skills yet.');
     return;
   }
   challenge.qs = d.questions;
   const t = document.getElementById('chTitle');
-  if (t) t.textContent = `${d.course.title} — challenge`;
+  if (t) t.textContent = d.course.unit ? `${d.course.title} — Unit ${d.course.unit.index + 1} test` : `${d.course.title} — challenge`;
   renderChallengeQ();
 }
 
@@ -580,7 +582,7 @@ export function pageDashboard(d) {
           ${d.suggested.map((s) => `
           <a class="lesson-row" href="/practice/${s.skillId}" data-nav>
             <span class="m-dot" data-level="${s.level === 'new' ? '' : s.level}"></span>
-            <div><div class="lr-title">${esc(s.name)}</div><div class="lr-sub">${s.kind === 'keep-going' ? `Keep going — streak ${s.streak}/5` : `New in ${esc(s.courseTitle || '')}`}</div></div>
+            <div><div class="lr-title">${esc(s.name)}</div><div class="lr-sub">${s.kind === 'keep-going' ? `Keep going — streak ${s.streak}/5` : s.kind === 'review' ? `Review — ${s.days}d since last practice` : `New in ${esc(s.courseTitle || '')}`}</div></div>
             <div class="lr-right"><span class="upnext-badge" style="background:var(--primary-soft);color:var(--primary-ink)">${icon('zap', 12)} Practice</span></div>
           </a>`).join('')}
         </div>` : ''}
