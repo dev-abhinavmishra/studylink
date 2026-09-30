@@ -151,6 +151,95 @@ module.exports = {
                 { type: 'callout', kind: 'warning', text: 'The headline rate can *fall* for a bad reason: if jobless people stop searching, they leave the labor force and the rate drops without anyone finding work. Check labor-force participation alongside the rate.' }
               ],
               skill: { id: 'unemployment', name: 'Unemployment rate', generator: 'unemploymentRate' }
+            },
+            {
+              id: 'business-cycles',
+              title: 'Business cycles and recessions',
+              minutes: 7,
+              summary: 'Economies breathe: expansion, peak, contraction, trough. Two quarters of shrinking GDP is the common recession marker.',
+              tags: ['business cycle', 'recession', 'macroeconomics'],
+              blocks: [
+                { type: 'p', text: 'Real economies do not grow in a straight line — they **oscillate**. The **business cycle** is the recurring rhythm: **expansion** (output, jobs, and income rising) → **peak** → **contraction** (activity falling) → **trough** → the next expansion.' },
+                { type: 'formula', text: '\\text{recession} \\approx 2\\ \\text{consecutive quarters of shrinking real GDP}' },
+                { type: 'callout', kind: 'key', text: 'The two-quarter rule is a useful shorthand, but official dating (by NBER in the U.S.) weighs employment, income, sales, and production too — a recession is a *broad* decline, not just a technical one.' },
+                { type: 'example', title: 'The cycle in one line', text: '2020 was the sharpest, shortest recession on record — GDP collapsed in weeks as the economy shut, then rebounded within months. 2008\'s "Great Recession" was slow and financial: housing credit froze, contraction ran 18 months.' },
+                { type: 'p', text: 'Cycles are why the policy levers exist: during contraction, central banks cut rates and governments run deficits (stimulus); during an overheated expansion, they do the reverse — not to eliminate the cycle, but to smooth it.' },
+                { type: 'callout', kind: 'warning', text: 'A recession is not a **depression** — a depression is a severe, years-long contraction (the 1930s Great Depression saw ~25% unemployment). Recessions are the normal, roughly 5–10 year, ebb of the cycle.' }
+              ],
+              skill: {
+                id: 'business-cycles',
+                name: 'Business cycle phases',
+                bank: [
+                  {
+                    type: 'choice',
+                    prompt: 'The common shorthand for a recession is…',
+                    choices: [
+                      { id: 'a', text: 'one quarter of falling GDP' },
+                      { id: 'b', text: 'two consecutive quarters of shrinking real GDP' },
+                      { id: 'c', text: 'unemployment above 10%' },
+                      { id: 'd', text: 'a stock market crash' }
+                    ],
+                    answer: 'b',
+                    hint: 'It is a duration rule, not a level rule.',
+                    steps: [
+                      'Two back-to-back quarters of negative real-GDP growth is the widely used marker.',
+                      'Official declarations are broader — employment, income, sales — but the shorthand captures the usual case.'
+                    ],
+                    answerText: '2 quarters of negative GDP growth'
+                  },
+                  {
+                    type: 'choice',
+                    prompt: 'The correct order of the business cycle is…',
+                    choices: [
+                      { id: 'a', text: 'trough → peak → expansion → contraction' },
+                      { id: 'b', text: 'expansion → peak → contraction → trough' },
+                      { id: 'c', text: 'peak → expansion → trough → contraction' },
+                      { id: 'd', text: 'contraction → expansion → trough → peak' }
+                    ],
+                    answer: 'b',
+                    hint: 'It is a wave: up, top, down, bottom.',
+                    steps: [
+                      'Expansion rises to the peak; contraction falls to the trough; the trough begins the next expansion.',
+                      'Peak and trough are the turning points — moments, not phases.'
+                    ],
+                    answerText: 'expansion → peak → contraction → trough'
+                  },
+                  {
+                    type: 'choice',
+                    prompt: 'Standard macro policy during a contraction calls for…',
+                    choices: [
+                      { id: 'a', text: 'higher interest rates and smaller deficits' },
+                      { id: 'b', text: 'lower interest rates and fiscal stimulus' },
+                      { id: 'c', text: 'no policy — cycles fix themselves' },
+                      { id: 'd', text: 'price controls' }
+                    ],
+                    answer: 'b',
+                    hint: 'Replace missing private demand.',
+                    steps: [
+                      'In a downturn, central banks cut rates to cheapen borrowing and governments spend/cut taxes to fill the demand gap.',
+                      'The levers reverse in overheating — the goal is smoothing the cycle, not eliminating it.'
+                    ],
+                    answerText: 'cut rates + stimulate'
+                  },
+                  {
+                    type: 'choice',
+                    prompt: 'What separates a depression from a recession?',
+                    choices: [
+                      { id: 'a', text: 'Depressions only happen abroad' },
+                      { id: 'b', text: 'Severity and duration — a depression is a deep, years-long contraction' },
+                      { id: 'c', text: 'Depressions have no unemployment' },
+                      { id: 'd', text: 'Nothing — they are synonyms' }
+                    ],
+                    answer: 'b',
+                    hint: 'The 1930s is the benchmark.',
+                    steps: [
+                      'A recession is the ordinary ebb of the cycle; a depression is a rare, severe, multi-year collapse (Great Depression unemployment peaked near 25%).',
+                      'Every depression is a contraction, but few contractions are depressions.'
+                    ],
+                    answerText: 'deeper + longer'
+                  }
+                ]
+              }
             }
           ]
         },

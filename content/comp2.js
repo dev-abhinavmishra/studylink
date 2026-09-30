@@ -554,6 +554,91 @@ module.exports = {
                   }
                 ]
               }
+            },
+            {
+              id: 'recursion-fundamentals',
+              title: 'Recursion: functions that call themselves',
+              minutes: 8,
+              summary: 'Solve a problem by solving a smaller version of itself — base case first, then trust the smaller call.',
+              tags: ['algorithms', 'recursion', 'trees'],
+              blocks: [
+                { type: 'p', text: '**Recursion** solves a problem by breaking it into a smaller copy of itself: $n! = n \\times (n-1)!$, a directory\'s size is its files plus its subdirectories\' sizes, a tree\'s height is 1 plus the taller subtree\'s height. The structure of the answer mirrors the structure of the problem.' },
+                { type: 'callout', kind: 'key', text: 'Every working recursive function needs two parts: a **base case** that answers directly (e.g., $0! = 1$), and a **recursive case** that shrinks toward it (e.g., $n! = n \\times (n-1)!$). No base case — or no shrink — means infinite recursion and a stack overflow.' },
+                { type: 'code', lang: 'js', text: 'function factorial(n) {\n  if (n <= 1) return 1;      // base case\n  return n * factorial(n - 1); // shrinks toward base\n}\n\nfunction treeHeight(node) {\n  if (!node) return 0;         // base: empty tree\n  return 1 + Math.max(treeHeight(node.left), treeHeight(node.right));\n}' },
+                { type: 'example', title: 'Trace factorial(4)', text: 'Calls stack up: `f(4) → f(3) → f(2) → f(1) = 1`. Then they unwind: `f(2) = 2`, `f(3) = 6`, `f(4) = 24`. Answers are assembled on the way back up the call stack.' },
+                { type: 'callout', kind: 'tip', text: 'To design recursion, write ONLY the base case and the recursive step — then *trust* the smaller call works. Verifying it mentally by expanding every level is the #1 beginner trap; check the base case and the shrink step instead.' },
+                { type: 'callout', kind: 'warning', text: 'Recursion pays for elegance with memory: each call adds a **stack frame**, so depth is bounded (typically thousands of calls). Deep recursion in Python/Java will crash; convert to a loop + explicit stack, or use languages with tail-call optimization.' }
+              ],
+              skill: {
+                id: 'recursion-fundamentals',
+                name: 'Read and trace recursion',
+                bank: [
+                  {
+                    type: 'numeric',
+                    prompt: 'What does `f(4)` return? `f(n) = n <= 0 ? 0 : n + f(n - 2)`',
+                    answer: 6,
+                    tolerance: 0.001,
+                    hint: 'f(4) = 4 + f(2); keep going until the base case.',
+                    steps: [
+                      'f(4) = 4 + f(2).',
+                      'f(2) = 2 + f(0), and f(0) hits the base case: 0.',
+                      'So f(2) = 2, and f(4) = 4 + 2 = 6.'
+                    ],
+                    answerText: '6'
+                  },
+                  {
+                    type: 'choice',
+                    prompt: 'A recursive function missing its base case will…',
+                    choices: [
+                      { id: 'a', text: 'Return 0' },
+                      { id: 'b', text: 'Run once and stop' },
+                      { id: 'c', text: 'Recurse forever until the call stack overflows' },
+                      { id: 'd', text: 'Skip the first call' }
+                    ],
+                    answer: 'c',
+                    hint: 'Nothing tells it to stop.',
+                    steps: [
+                      'The base case is the only exit; without it every call spawns another.',
+                      'Each call consumes a stack frame — memory runs out: stack overflow.'
+                    ],
+                    answerText: 'stack overflow'
+                  },
+                  {
+                    type: 'choice',
+                    prompt: 'For a directory-size function `size(dir) = file sizes + sum(size(subdir))`, the base case is…',
+                    choices: [
+                      { id: 'a', text: 'a directory with no files' },
+                      { id: 'b', text: 'a directory with no subdirectories' },
+                      { id: 'c', text: 'the root directory' },
+                      { id: 'd', text: 'an empty file' }
+                    ],
+                    answer: 'b',
+                    hint: 'Recursion descends through subdirectories — where must it stop?',
+                    steps: [
+                      'The recursion only continues while subdirectories exist.',
+                      'A directory with no subdirs answers directly: just sum its files. That is the base case.'
+                    ],
+                    answerText: 'no subdirectories'
+                  },
+                  {
+                    type: 'choice',
+                    prompt: 'Why are recursive functions limited to thousands of levels deep?',
+                    choices: [
+                      { id: 'a', text: 'Compilers cap recursion depth' },
+                      { id: 'b', text: 'Each call uses a stack frame, and the call stack is finite' },
+                      { id: 'c', text: 'Recursion is only allowed in functional languages' },
+                      { id: 'd', text: 'CPUs cannot count higher' }
+                    ],
+                    answer: 'b',
+                    hint: 'Where do the "waiting" calls live?',
+                    steps: [
+                      'Every active call holds a frame (args, locals, return address) on the call stack.',
+                      'The stack is typically ~1 MB — deep recursion exhausts it: "maximum call stack size exceeded" or StackOverflowError.'
+                    ],
+                    answerText: 'finite call stack'
+                  }
+                ]
+              }
             }
           ]
         }

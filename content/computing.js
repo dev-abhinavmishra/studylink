@@ -1377,6 +1377,95 @@ user['age'];        // 36      (bracket notation)` },
                   }
                 ]
               }
+            },
+            {
+              id: 'css-grid-responsive',
+              title: 'CSS Grid and responsive design',
+              minutes: 9,
+              summary: 'Grid handles two-dimensional layouts; media queries adapt them to every screen. One codebase, every device.',
+              tags: ['css', 'grid', 'responsive'],
+              blocks: [
+                { type: 'p', text: 'Flexbox lays out a **row or a column**; **CSS Grid** lays out both at once — rows AND columns in one declaration. It is the right tool for page skeletons (header / sidebar / content / footer) and any layout where items must align in two dimensions.' },
+                { type: 'code', lang: 'css', text: '.page {\n  display: grid;\n  grid-template-columns: 220px 1fr;  /* sidebar + rest */\n  grid-template-rows: auto 1fr auto;   /* header, body, footer */\n  gap: 16px;\n}\n\n.card-grid {\n  display: grid;\n  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));\n  gap: 12px;  /* auto-fits cards without media queries */\n}' },
+                { type: 'callout', kind: 'key', text: '**Media queries** restyle the page when conditions change — most often viewport width. `repeat(auto-fill, minmax(180px, 1fr))` is the "responsive-without-media-queries" trick: the browser itself decides how many 180px+ columns fit.' },
+                { type: 'code', lang: 'css', text: '/* mobile-first: single column by default */\n.page { grid-template-columns: 1fr; }\n\n@media (min-width: 720px) {\n  .page { grid-template-columns: 220px 1fr; }  /* add sidebar */\n}' },
+                { type: 'callout', kind: 'tip', text: '**Mobile-first** means writing the small-screen styles as defaults and adding complexity in `min-width` queries — rather than stripping a desktop layout down with `max-width` overrides. Simpler cascade, better performance on phones.' },
+                { type: 'callout', kind: 'warning', text: 'Grid vs flexbox is not a rivalry: grid owns the **page skeleton** (2D alignment), flexbox owns the **component innards** (a row of buttons, a nav bar). Real sites nest them constantly.' }
+              ],
+              skill: {
+                id: 'css-grid-responsive',
+                name: 'Grid and media queries',
+                bank: [
+                  {
+                    type: 'choice',
+                    prompt: 'When is `display: grid` a better fit than `display: flex`?',
+                    choices: [
+                      { id: 'a', text: 'Centering one button' },
+                      { id: 'b', text: 'A page layout needing rows and columns aligned together' },
+                      { id: 'c', text: 'A row of nav links' },
+                      { id: 'd', text: 'Never — flexbox does everything' }
+                    ],
+                    answer: 'b',
+                    hint: 'Flex is 1-dimensional; grid is 2-dimensional.',
+                    steps: [
+                      'Flexbox aligns items along ONE axis (row or column).',
+                      'When items must line up in rows AND columns — page skeletons, card walls — grid does it in one declaration.'
+                    ],
+                    answerText: '2D layouts'
+                  },
+                  {
+                    type: 'choice',
+                    prompt: 'What does `@media (min-width: 720px) { ... }` do?',
+                    choices: [
+                      { id: 'a', text: 'Applies the styles when the viewport is at least 720px wide' },
+                      { id: 'b', text: 'Applies the styles on screens smaller than 720px' },
+                      { id: 'c', text: 'Sets the page width to 720px' },
+                      { id: 'd', text: 'Loads a 720px image' }
+                    ],
+                    answer: 'a',
+                    hint: 'min-width means "and wider."',
+                    steps: [
+                      'Media queries apply their block only when the condition is true.',
+                      '`min-width: 720px` is true whenever the viewport is 720px or wider — the classic desktop-over-mobile breakpoint.'
+                    ],
+                    answerText: 'styles for viewports ≥ 720px'
+                  },
+                  {
+                    type: 'choice',
+                    prompt: '`grid-template-columns: repeat(auto-fill, minmax(180px, 1fr))` produces…',
+                    choices: [
+                      { id: 'a', text: 'Always 180 columns' },
+                      { id: 'b', text: 'As many ≥180px columns as fit, stretching to fill the space' },
+                      { id: 'c', text: 'One column exactly 180px wide' },
+                      { id: 'd', text: 'An error — auto-fill is not real CSS' }
+                    ],
+                    answer: 'b',
+                    hint: 'The browser counts how many fit.',
+                    steps: [
+                      '`minmax(180px, 1fr)` means each column is at least 180px and shares leftover space equally.',
+                      '`auto-fill` packs in as many as the container fits — the wall of cards that resizes itself.'
+                    ],
+                    answerText: 'auto-fitting ≥180px columns'
+                  },
+                  {
+                    type: 'choice',
+                    prompt: 'In mobile-first CSS, the default (unqueried) styles target…',
+                    choices: [
+                      { id: 'a', text: 'Desktops, then you remove features on small screens' },
+                      { id: 'b', text: 'Small screens, and min-width queries add larger-screen enhancements' },
+                      { id: 'c', text: 'Print stylesheets' },
+                      { id: 'd', text: 'Tablets only' }
+                    ],
+                    answer: 'b',
+                    hint: '"First" means the base case.',
+                    steps: [
+                      'Mobile-first writes the phone layout as the default.',
+                      '`min-width` media queries then layer on the sidebar/multi-column layouts as screens get bigger — a simpler cascade than desktop-first overrides.'
+                    ],
+                    answerText: 'small screens by default'
+                  }
+                ]
+              }
             }
           ]
         },

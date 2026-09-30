@@ -1134,6 +1134,95 @@ module.exports = {
                   }
                 ]
               }
+            },
+            {
+              id: 'cold-war-decolonization',
+              title: 'Cold War and decolonization',
+              minutes: 9,
+              summary: 'A bipolar world: U.S.–Soviet rivalry, the nuclear arms race, and the dismantling of Europe\'s empires across Asia and Africa.',
+              tags: ['cold war', 'decolonization', '20th century'],
+              blocks: [
+                { type: 'p', text: 'WWII left two victors standing: the U.S. and USSR, whose alliance dissolved almost immediately into the **Cold War**. Europe was the first fault line — the **Berlin Blockade** (1948–49) and airlift, then rival military alliances: **NATO** (1949) vs. the **Warsaw Pact** (1955).' },
+                { type: 'callout', kind: 'key', text: 'Nuclear weapons made direct war suicidal — so the superpowers competed in **proxy wars** (Korea, Vietnam, Afghanistan), espionage, and prestige projects like the space race. **Mutual assured destruction** paradoxically kept the peace: whoever fired first would also be destroyed.' },
+                { type: 'example', title: 'Sputnik to Apollo', text: 'The USSR launched Sputnik, the first satellite, in 1957 — sparking panic and a U.S. crash program (NASA, 1958). The race peaked with Apollo 11 landing humans on the Moon in 1969.' },
+                { type: 'p', text: 'Meanwhile Europe\'s empires dissolved. Weakened colonial powers and emboldened independence movements produced **decolonization**: India independent in 1947, most of Africa by the 1960s — more than 50 new nations in two decades. Newly independent states became Cold War battlegrounds for influence; many formed the **Non-Aligned Movement** to refuse both blocs.' },
+                { type: 'callout', kind: 'warning', text: 'Decolonization was rarely clean: partitions (India/Pakistan, 1947), civil wars (Congo), and superpower meddling (Iran 1953, Guatemala 1954) left conflicts that still shape the world.' },
+                { type: 'p', text: 'The era closed when the Soviet system collapsed — the Berlin Wall fell in 1989, the USSR dissolved in 1991 — and decolonization\'s aftershocks continue in the borders and politics of today\'s Asia, Africa, and Middle East.' }
+              ],
+              skill: {
+                id: 'cold-war-decolonization',
+                name: 'Cold War and decolonization',
+                bank: [
+                  {
+                    type: 'choice',
+                    prompt: 'Why did the U.S. and USSR avoid fighting each other directly?',
+                    choices: [
+                      { id: 'a', text: 'The UN banned it' },
+                      { id: 'b', text: 'Mutual assured destruction — nuclear war would annihilate both' },
+                      { id: 'c', text: 'They were secretly allies' },
+                      { id: 'd', text: 'Neither had a strong military' }
+                    ],
+                    answer: 'b',
+                    hint: 'The weapons themselves changed the logic of war.',
+                    steps: [
+                      'Both powers had nuclear arsenals capable of destroying the other many times over.',
+                      'Direct war meant annihilation — so rivalry moved to proxies, spies, and prestige instead.'
+                    ],
+                    answerText: 'Nuclear deterrence (MAD)'
+                  },
+                  {
+                    type: 'choice',
+                    prompt: 'The 1957 Sputnik launch is significant because it:',
+                    choices: [
+                      { id: 'a', text: 'Was the first satellite, starting the space race' },
+                      { id: 'b', text: 'Carried the first human to space' },
+                      { id: 'c', text: 'Landed on the Moon' },
+                      { id: 'd', text: 'Was an American achievement' }
+                    ],
+                    answer: 'a',
+                    hint: 'It was Soviet, small, and it panicked America.',
+                    steps: [
+                      'Sputnik was the first artificial satellite — a Soviet triumph that shocked the U.S.',
+                      'It triggered NASA\'s creation and the space race, culminating in Apollo 11 (1969).'
+                    ],
+                    answerText: 'First satellite → space race'
+                  },
+                  {
+                    type: 'choice',
+                    prompt: 'Decolonization refers to:',
+                    choices: [
+                      { id: 'a', text: 'The spread of democracy in Europe' },
+                      { id: 'b', text: 'Colonies gaining independence from European empires after WWII' },
+                      { id: 'c', text: 'The division of Germany' },
+                      { id: 'd', text: 'The creation of NATO' }
+                    ],
+                    answer: 'b',
+                    hint: 'Over 50 new nations emerged in two decades.',
+                    steps: [
+                      'War-weakened European powers could no longer hold their empires; independence movements succeeded across Asia and Africa.',
+                      'India (1947) led; most of Africa followed by the 1960s — many new states then faced Cold War pressure to pick a side.'
+                    ],
+                    answerText: 'End of European colonial empires'
+                  },
+                  {
+                    type: 'choice',
+                    prompt: 'The Non-Aligned Movement was formed by countries that:',
+                    choices: [
+                      { id: 'a', text: 'Joined NATO collectively' },
+                      { id: 'b', text: 'Refused to align with either Cold War bloc' },
+                      { id: 'c', text: 'Opposed all international organizations' },
+                      { id: 'd', text: 'Remained colonies' }
+                    ],
+                    answer: 'b',
+                    hint: 'India, Egypt, Yugoslavia — charting a third path.',
+                    steps: [
+                      'Newly independent states like India, Egypt, Indonesia, and Yugoslavia organized formally in 1961 to avoid becoming either superpower\'s client.',
+                      'Non-alignment was an active third position — not isolation, but sovereignty over alliances.'
+                    ],
+                    answerText: 'Neither U.S. nor Soviet bloc'
+                  }
+                ]
+              }
             }
           ]
         }
@@ -2094,6 +2183,95 @@ module.exports = {
                       'It was a *legal system*, not a person — and its dismantling required both court victories (Brown) and statutes (the 1964/1965 acts).'
                     ],
                     answerText: 'Laws enforcing racial segregation in the South'
+                  }
+                ]
+              }
+            },
+            {
+              id: 'cold-war-america',
+              title: 'America in the Cold War',
+              minutes: 9,
+              summary: 'Containment, McCarthyism, the space race, and Vietnam — how four decades of rivalry with the USSR shaped American life.',
+              tags: ['cold war', 'superpower', 'vietnam'],
+              blocks: [
+                { type: 'p', text: 'After 1945 the U.S. and USSR emerged as rival **superpowers** with incompatible systems — capitalism/democracy vs. communism/one-party rule — and nuclear arsenals that made direct war unwinnable. The result was 45 years of **Cold War**: competition by proxy, propaganda, espionage, and arms race rather than head-on battle.' },
+                { type: 'callout', kind: 'key', text: 'The guiding U.S. strategy was **containment** — stop communism from spreading rather than try to roll it back. The **Truman Doctrine** (1947) pledged support to nations resisting communism; the **Marshall Plan** (1948) rebuilt Western Europe so desperation would not breed communism.' },
+                { type: 'example', title: 'Proxy conflicts', text: 'The Cold War\'s battles were fought on other people\'s soil: **Korea** (1950–53) ended in stalemate at the 38th parallel; **Vietnam** (escalating 1965–73) became America\'s longest, most divisive war — a containment fight that ended with Saigon\'s fall in 1975.' },
+                { type: 'p', text: 'The rivalry reached into space and suburbia alike. Sputnik (1957) shocked the U.S. into the **space race** — answered by Apollo 11\'s Moon landing (1969). At home, **McCarthyism** turned anti-communism into a witch hunt of ruined careers on flimsy evidence, before Senate censure ended it in 1954.' },
+                { type: 'callout', kind: 'warning', text: 'The **Cuban Missile Crisis** (October 1962) was the closest the world came to nuclear war: Soviet missiles in Cuba, American blockade, thirteen days of brinkmanship — resolved by quiet trading of Soviet missiles out of Cuba for U.S. missiles out of Turkey.' },
+                { type: 'p', text: 'The Cold War ended not with a battle but a collapse: Soviet economic stagnation plus Gorbachev\'s reforms led to the Berlin Wall falling (1989) and the USSR dissolving (1991) — leaving the U.S. the sole superpower.' }
+              ],
+              skill: {
+                id: 'cold-war-america',
+                name: 'Cold War era knowledge',
+                bank: [
+                  {
+                    type: 'choice',
+                    prompt: 'The U.S. Cold War strategy of "containment" meant:',
+                    choices: [
+                      { id: 'a', text: 'Invading the Soviet Union directly' },
+                      { id: 'b', text: 'Stopping the spread of communism to new countries rather than trying to eliminate it where it already existed' },
+                      { id: 'c', text: 'Isolating the U.S. from world affairs' },
+                      { id: 'd', text: 'Stockpiling nuclear weapons secretly' }
+                    ],
+                    answer: 'b',
+                    hint: 'Truman aimed to prevent *new* dominoes from falling.',
+                    steps: [
+                      'George Kennan\'s containment doctrine: communism expands into instability — deny it expansion and it would eventually "mellow."',
+                      'It drove the Truman Doctrine, Marshall Plan, Korea, and Vietnam — all fights to hold the line, not to conquer the USSR.'
+                    ],
+                    answerText: 'Preventing communist expansion, not rolling it back'
+                  },
+                  {
+                    type: 'choice',
+                    prompt: 'The 1962 Cuban Missile Crisis ended when:',
+                    choices: [
+                      { id: 'a', text: 'The U.S. invaded Cuba' },
+                      { id: 'b', text: 'The UN sent peacekeepers' },
+                      { id: 'c', text: 'The USSR withdrew missiles from Cuba in exchange for a U.S. no-invasion pledge and secret removal of U.S. missiles from Turkey' },
+                      { id: 'd', text: 'Cuba surrendered to the U.S. blockade' }
+                    ],
+                    answer: 'c',
+                    hint: 'Both sides traded missiles, one quietly.',
+                    steps: [
+                      'Kennedy chose a naval "quarantine" over airstrikes, buying time for diplomacy.',
+                      'Khrushchev pulled the missiles out publicly; the U.S. pledged not to invade Cuba and quietly removed Jupiter missiles from Turkey — brinkmanship resolved by mutual concession.'
+                    ],
+                    answerText: 'Soviet withdrawal for a no-invasion pledge + Turkey missiles out'
+                  },
+                  {
+                    type: 'choice',
+                    prompt: 'McCarthyism refers to:',
+                    choices: [
+                      { id: 'a', text: 'The rebuilding of Europe after WWII' },
+                      { id: 'b', text: 'The Korean War ceasefire negotiations' },
+                      { id: 'c', text: 'A wave of anti-communist accusations and ruined careers on flimsy evidence' },
+                      { id: 'd', text: 'The Apollo space program' }
+                    ],
+                    answer: 'c',
+                    hint: 'It happened at home, in Senate hearing rooms.',
+                    steps: [
+                      'Senator Joseph McCarthy claimed communists had infiltrated government and Hollywood; hearings destroyed careers on little or no evidence.',
+                      'Televised Army–McCarthy hearings (1954) exposed the tactics; Senate censure followed. The term now means accusation without proof.'
+                    ],
+                    answerText: 'Anti-communist witch hunt'
+                  },
+                  {
+                    type: 'choice',
+                    prompt: 'The Cold War ended primarily because:',
+                    choices: [
+                      { id: 'a', text: 'The U.S. won a decisive military victory' },
+                      { id: 'b', text: 'The Soviet economy stagnated and its reform attempts unraveled the system' },
+                      { id: 'c', text: 'NATO disbanded' },
+                      { id: 'd', text: 'China invaded the USSR' }
+                    ],
+                    answer: 'b',
+                    hint: 'The Berlin Wall fell in 1989; the USSR dissolved in 1991.',
+                    steps: [
+                      'Decades of arms spending and a sclerotic planned economy left the USSR stagnant; Gorbachev\'s glasnost/perestroika reforms loosened control faster than the system could survive.',
+                      'Satellite states broke free (1989), the Wall fell, and the USSR itself dissolved in 1991 — an economic and political collapse, not a battlefield result.'
+                    ],
+                    answerText: 'Soviet internal collapse'
                   }
                 ]
               }

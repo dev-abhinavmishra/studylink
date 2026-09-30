@@ -1507,6 +1507,86 @@ module.exports = {
                   }
                 ]
               }
+            },
+            {
+              id: 'stoichiometry',
+              title: 'Stoichiometry: the recipe math of chemistry',
+              minutes: 9,
+              summary: 'Grams → moles → ratio → moles → grams. A balanced equation is a recipe, and the mole ratio is how you scale it.',
+              tags: ['chemistry', 'stoichiometry', 'moles'],
+              blocks: [
+                { type: 'p', text: 'A balanced equation like $2\\text{H}_2 + \\text{O}_2 \\rightarrow 2\\text{H}_2\\text{O}$ is a **recipe**: 2 molecules of hydrogen plus 1 of oxygen make 2 of water. **Stoichiometry** scales that recipe to real quantities — how many grams of water from 10 g of hydrogen?' },
+                { type: 'callout', kind: 'key', text: 'The universal path is **grams → moles → mole ratio → moles → grams**. You cannot compare grams directly — the coefficients count *particles*, and only moles count particles.' },
+                { type: 'formula', text: '\\text{mass}_A \\xrightarrow{\\div M_A} \\text{mol}_A \\xrightarrow{\\times\\ \\tfrac{\\text{coef}_B}{\\text{coef}_A}} \\text{mol}_B \\xrightarrow{\\times\\ M_B} \\text{mass}_B' },
+                { type: 'example', title: 'Water from hydrogen', text: 'How much O₂ is needed for 4 g of H₂? Step 1, to moles: $4\\ \\text{g} \\div 2\\ \\text{g/mol} = 2$ mol H₂. Step 2, ratio $1:2$: $2 \\times \\frac{1}{2} = 1$ mol O₂. Step 3, back to grams: $1 \\times 32 = 32$ g O₂.' },
+                { type: 'callout', kind: 'warning', text: 'The mole ratio uses the equation\'s **coefficients**, not subscripts or masses. In $2\\text{H}_2 + \\text{O}_2 \\rightarrow 2\\text{H}_2\\text{O}$, the H₂:O₂ ratio is 2:1 — even though oxygen is 16× heavier per atom.' },
+                { type: 'p', text: 'The limiting piece is the **limiting reactant** — the ingredient that runs out first caps how much product forms, exactly like running out of eggs caps a recipe. Compute product from EACH reactant; the smaller answer is what actually forms.' }
+              ],
+              skill: {
+                id: 'stoichiometry',
+                name: 'Stoichiometric calculations',
+                bank: [
+                  {
+                    type: 'numeric',
+                    prompt: 'For $2\\text{H}_2 + \\text{O}_2 \\rightarrow 2\\text{H}_2\\text{O}$: how many grams of O₂ react with 4 g of H₂? (H₂ = 2 g/mol, O₂ = 32 g/mol)',
+                    answer: 32,
+                    tolerance: 0.001,
+                    hint: 'Grams → moles → ratio → moles → grams.',
+                    steps: [
+                      '$4\\ \\text{g}\\ \\text{H}_2 \\div 2\\ \\text{g/mol} = 2$ mol H₂.',
+                      'Ratio O₂:H₂ is 1:2 → $2 \\times \\frac{1}{2} = 1$ mol O₂.',
+                      '$1 \\times 32 = 32$ g O₂.'
+                    ],
+                    answerText: '32 g'
+                  },
+                  {
+                    type: 'numeric',
+                    prompt: '$\\text{N}_2 + 3\\text{H}_2 \\rightarrow 2\\text{NH}_3$. How many moles of NH₃ form from 6 mol of H₂ (N₂ unlimited)?',
+                    answer: 4,
+                    tolerance: 0.001,
+                    hint: 'The NH₃:H₂ ratio is 2:3.',
+                    steps: [
+                      '$6\\ \\text{mol}\\ \\text{H}_2 \\times \\frac{2}{3} = 4$ mol NH₃.',
+                      'Already in moles — no gram conversions needed.'
+                    ],
+                    answerText: '4 mol'
+                  },
+                  {
+                    type: 'choice',
+                    prompt: 'In stoichiometry, why convert grams to moles before using the equation\'s coefficients?',
+                    choices: [
+                      { id: 'a', text: 'Moles are easier to write' },
+                      { id: 'b', text: 'Coefficients count particles, and only moles count particles — grams weigh differently per substance' },
+                      { id: 'c', text: 'Grams are always wrong' },
+                      { id: 'd', text: 'No reason — grams work directly' }
+                    ],
+                    answer: 'b',
+                    hint: 'A gram of hydrogen and a gram of uranium hold wildly different particle counts.',
+                    steps: [
+                      'Coefficients say "2 molecules H₂ per 1 molecule O₂" — a particle recipe.',
+                      'Grams measure mass, not count. The mole bridge (6.022×10²³) converts mass into particle count so the ratio applies.'
+                    ],
+                    answerText: 'Coefficients count particles; moles count particles'
+                  },
+                  {
+                    type: 'choice',
+                    prompt: 'A recipe needs 2 eggs per cake. You have 6 eggs and flour for 10 cakes. The limiting reactant is…',
+                    choices: [
+                      { id: 'a', text: 'Flour' },
+                      { id: 'b', text: 'Eggs — they cap you at 3 cakes' },
+                      { id: 'c', text: 'Both equally' },
+                      { id: 'd', text: 'Neither' }
+                    ],
+                    answer: 'b',
+                    hint: 'Whichever runs out first wins.',
+                    steps: [
+                      'Eggs support $6 \\div 2 = 3$ cakes; flour supports 10.',
+                      'The smaller capacity limits production — eggs are limiting, flour is in excess.'
+                    ],
+                    answerText: 'Eggs (cap: 3 cakes)'
+                  }
+                ]
+              }
             }
           ]
         }
