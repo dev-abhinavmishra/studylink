@@ -360,6 +360,46 @@ app.post('/api/skills/:id/answer', (req, res) => {
   });
 });
 
+// Course challenge: a mixed assessment spanning every skill in the course.
+// Questions go through the same sessionQ/answer pipeline as practice —
+// grading and progress updates stay server-side and consistent.
+app.get('/api/courses/:id/challenge', (req, res) => {
+  const hit = courseIndex.get(req.params.id);
+  if (!hit) return res.status(404).json({ error: 'Course not found' });
+  const seen = new Set();
+  const pool = [];
+  hit.course.units.forEach((u) => u.lessons.forEach((l) => {
+    if (l.skill && !seen.has(l.skill.id)) {
+      seen.add(l.skill.id);
+      pool.push({ skill: l.skill, lesson: l, unit: u });
+    }
+  }));
+  if (!pool.length) return res.status(404).json({ error: 'This course has no practice skills yet' });
+  for (let i = pool.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  const questions = pool.slice(0, Math.min(10, pool.length)).map((p) => {
+    const q = questionPayload({ skill: p.skill });
+    if (!q) return null;
+    const qid = `q${qidSeq += 1}`;
+    sessionQ.set(qid, {
+      answer: q.answer, tolerance: q.tolerance || 0, normalize: q.normalize,
+      steps: q.steps || [], answerText: q.answerText || String(q.answer),
+      skillId: p.skill.id, expires: Date.now() + 30 * 60 * 1000
+    });
+    return {
+      qid, skillId: p.skill.id, skillName: p.skill.name, unit: p.unit.title,
+      question: { type: q.type, prompt: q.prompt, choices: q.choices, hint: q.hint }
+    };
+  }).filter(Boolean);
+  res.json({
+    course: { id: hit.course.id, title: hit.course.title, subjectId: hit.subject.id },
+    count: questions.length,
+    questions
+  });
+});
+
 // ---------- progress / visits ---------------------------------------------
 
 app.post('/api/lessons/:id/visit', (req, res) => {

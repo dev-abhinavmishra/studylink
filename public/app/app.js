@@ -2,7 +2,7 @@ import { api, refreshMe, state } from './api.js';
 import { navHtml, footerHtml, wireNav, go, _setNav, skeletons } from './ui.js';
 import { pageLanding, wireLanding, pageAbout, pageFaq, pageTerms, pagePrivacy, pageNotFound } from './pages-marketing.js';
 import { pageAuth, wireAuth, pageProfile, wireProfile } from './pages-auth.js';
-import { pageSubjects, pageSubject, pageCourse, pageLesson, wireLesson, pagePractice, loadQuestion, pageDashboard } from './pages-learn.js';
+import { pageSubjects, pageSubject, pageCourse, pageLesson, wireLesson, pagePractice, loadQuestion, pageDashboard, pageChallenge, startChallenge } from './pages-learn.js';
 import { pageHelp, wireHelp, pageThread, wireThread, pageAsk, wireAsk, pageCoach, wireCoach, pageSearch } from './pages-help.js';
 
 const app = document.getElementById('app');
@@ -70,6 +70,11 @@ async function route() {
       page = pagePractice('Practice');
       wire = () => loadQuestion(skillId);
       title = 'Practice · Lumina';
+    } else if (path.match(/^\/challenge\/[^/]+$/)) {
+      const courseId = path.split('/')[2];
+      page = pageChallenge();
+      wire = () => startChallenge(courseId);
+      title = 'Course challenge · Lumina';
     } else if (path === '/dashboard') {
       if (!state.me?.user) { go('/login'); return; }
       const d = await api('GET', '/api/dashboard');

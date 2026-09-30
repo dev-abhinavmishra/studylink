@@ -82,6 +82,11 @@ export function pageCourse(subject, course) {
           </div>
           <div class="progress-track"><div class="progress-fill" style="width:${Math.round(100 * course.progress.done / course.progress.total)}%;background:${subject.color}"></div></div>
         </div>` : ''}
+      ${course.skills?.length ? `
+        <div class="mt-3">
+          <a class="btn btn-primary" href="/challenge/${course.id}" data-nav>${icon('target', 15)} Take the course challenge</a>
+          <span class="muted small" style="margin-left:10px">${course.skills.length} skills · one question each</span>
+        </div>` : ''}
     </div>
     ${course.units.map((u, ui) => `
       <div class="unit-block">
@@ -338,6 +343,189 @@ async function submitAnswer(skillId, d, answer) {
   if (level) {
     document.getElementById('levelBadge').innerHTML = `<div class="flex aic gap-1">${masteryDot(level)} ${masteryTag(level)}</div>`;
   }
+}
+
+// ---------- course challenge -------------------------------------------------
+// A mixed assessment across a course's skills — one question per skill,
+// graded through the same server pipeline as practice.
+
+let challenge = { courseId: null, qs: [], idx: 0, results: [], xp: 0 };
+
+export function pageChallenge() {
+  challenge = { courseId: null, qs: [], idx: 0, results: [], xp: 0 };
+  return `
+  <div class="wrap page">
+    <div class="page-head" style="padding-bottom:14px">
+      <div class="eyebrow">Course challenge</div>
+      <h1 style="font-size:1.6rem" id="chTitle">Loading…</h1>
+      <div class="muted small">One question per skill — see how much of the course you've really got.</div>
+    </div>
+    <div id="chHost">${skeletons(1, 260)}</div>
+  </div>`;
+}
+
+export async function startChallenge(courseId) {
+  challenge.courseId = courseId;
+  const host = document.getElementById('chHost');
+  let d;
+  try {
+    d = await api('GET', `/api/courses/${courseId}/challenge`);
+  } catch (e) {
+    host.innerHTML = emptyState('target', 'No challenge yet', e.message || 'This course has no practice skills yet.');
+    return;
+  }
+  challenge.qs = d.questions;
+  const t = document.getElementById('chTitle');
+  if (t) t.textContent = `${d.course.title} — challenge`;
+  renderChallengeQ();
+}
+
+function renderChallengeQ() {
+  const host = document.getElementById('chHost');
+  if (!host) return;
+  const item = challenge.qs[challenge.idx];
+  const q = item.question;
+  const total = challenge.qs.length;
+  challenge.answered = false;
+  host.innerHTML = `
+    <div class="progress-track mb-3"><div class="progress-fill" style="width:${(challenge.idx / total) * 100}%"></div></div>
+    <div class="card q-card fade-in">
+      <div class="flex aic jcsb mb-1">
+        <div class="muted small">Question ${challenge.idx + 1} of ${total} · ${esc(item.unit)}</div>
+        <span class="badge badge-muted">${esc(item.skillName)}</span>
+      </div>
+      <div class="q-prompt">${inlineMd(q.prompt)}</div>
+      ${q.type === 'choice' ? `
+        <div class="choice-list" id="choiceList">
+          ${q.choices.map((c) => `<button class="choice" data-id="${c.id}"><span class="choice-letter">${c.id}</span><span>${inlineMd(c.text)}</span></button>`).join('')}
+        </div>` : `
+        <div class="numeric-row">
+          <input class="input" id="chNum" placeholder="Your answer…" autocomplete="off" ${q.type === 'numeric' ? 'inputmode="decimal"' : ''}>
+          <button class="btn btn-primary" id="chSubmit">Check</button>
+        </div>`}
+      <div id="qFeedback"></div>
+      <div class="flex gap-2 mt-3">
+        <button class="btn btn-ghost btn-sm" id="hintBtn">${icon('lightbulb', 14)} Hint</button>
+      </div>
+      <div id="hintHost"></div>
+    </div>`;
+
+  const submit = (answer) => submitChallenge(item, q, answer);
+  if (q.type === 'choice') {
+    host.querySelectorAll('.choice').forEach((btn) => {
+      btn.onclick = () => { if (!challenge.answered) submit(btn.dataset.id); };
+    });
+  } else {
+    const input = host.querySelector('#chNum');
+    input.focus();
+    input.onkeydown = (e) => { if (e.key === 'Enter' && !challenge.answered) submit(input.value); };
+    host.querySelector('#chSubmit').onclick = () => { if (!challenge.answered) submit(input.value); };
+  }
+  host.querySelector('#hintBtn').onclick = () => {
+    const hh = host.querySelector('#hintHost');
+    if (q.hint) hh.innerHTML = `<div class="hint-box">${icon('lightbulb', 14)} ${inlineMd(q.hint)}</div>`;
+  };
+  document.onkeydown = (e) => {
+    if (e.target.tagName === 'INPUT' && e.key !== 'Enter') return;
+    if (challenge.answered && e.key === 'Enter') { e.preventDefault(); host.querySelector('#chNext')?.click(); }
+    if (!challenge.answered && q.type === 'choice' && ['1', '2', '3', '4'].includes(e.key)) {
+      const btn = host.querySelectorAll('.choice')[+e.key - 1];
+      if (btn) btn.click();
+    }
+    if (e.key.toLowerCase() === 'h' && e.target.tagName !== 'INPUT') host.querySelector('#hintBtn')?.click();
+  };
+}
+
+async function submitChallenge(item, q, answer) {
+  if (answer == null || answer === '') return;
+  challenge.answered = true;
+  const host = document.getElementById('chHost');
+  let res;
+  try {
+    res = await api('POST', `/api/skills/${item.skillId}/answer`, { qid: item.qid, answer });
+  } catch (err) {
+    challenge.answered = false;
+    toast(err.message || 'Could not check that answer', '');
+    return;
+  }
+  challenge.results.push({ skillId: item.skillId, skillName: item.skillName, unit: item.unit, correct: res.correct, level: res.progress?.level });
+  challenge.xp += res.progress?.xpAwarded || 0;
+  if (res.guest) recordGuestAttempt(item.skillId, res.correct);
+
+  if (q.type === 'choice') {
+    host.querySelectorAll('.choice').forEach((btn) => {
+      btn.disabled = true;
+      const isAnswer = btn.dataset.id === res.reveal?.answer;
+      const picked = btn.dataset.id === answer;
+      if (isAnswer) btn.classList.add('correct');
+      else if (picked) btn.classList.add('wrong');
+      else btn.classList.add('dim');
+    });
+  } else {
+    const inp = host.querySelector('#chNum');
+    inp.disabled = true;
+    host.querySelector('#chSubmit').disabled = true;
+    inp.style.borderColor = res.correct ? 'var(--green)' : 'var(--red)';
+  }
+
+  const steps = res.reveal?.steps || [];
+  host.querySelector('#qFeedback').innerHTML = `
+    <div class="feedback ${res.correct ? 'ok' : 'no'}">
+      ${icon(res.correct ? 'check' : 'x', 17)}
+      <span>${res.correct
+        ? `Correct${res.progress?.xpAwarded ? ` — +${res.progress.xpAwarded} XP` : ''}`
+        : `Not quite — the answer was <b>&nbsp;${inlineMd(res.reveal?.answerText ?? String(res.reveal?.answer ?? ''))}</b>`}</span>
+    </div>
+    ${steps.length ? `
+      <div class="steps-box">
+        <div class="steps-head">${icon('book', 14)} Worked solution</div>
+        ${steps.map((s, i) => `<div class="step"><span class="step-n">${i + 1}</span>${inlineMd(s)}</div>`).join('')}
+      </div>` : ''}
+    <div class="flex mt-3" style="justify-content:flex-end">
+      <button class="btn btn-primary" id="chNext">${challenge.idx + 1 >= challenge.qs.length ? 'See results' : 'Next question'} ${icon('arrowR', 15)}</button>
+    </div>`;
+  host.querySelector('#chNext').onclick = () => {
+    challenge.idx += 1;
+    if (challenge.idx >= challenge.qs.length) renderChallengeResults();
+    else renderChallengeQ();
+  };
+  if (res.progress?.xpAwarded) window.dispatchEvent(new Event('lumina:nav-refresh'));
+}
+
+function renderChallengeResults() {
+  const host = document.getElementById('chHost');
+  const total = challenge.results.length;
+  const right = challenge.results.filter((r) => r.correct).length;
+  const pct = total ? Math.round((right / total) * 100) : 0;
+  const verdict = pct >= 80
+    ? 'Solid — you know this material. Keep it fresh with practice.'
+    : pct >= 50
+      ? 'A decent base — a few skills need another pass.'
+      : 'This course needs a bit more work — the lessons below are the place to start.';
+  const weakest = challenge.results.filter((r) => !r.correct).slice(0, 3);
+  const t = document.getElementById('chTitle');
+  if (t) t.textContent = 'Challenge results';
+  host.innerHTML = `
+    <div class="progress-track mb-3"><div class="progress-fill" style="width:100%"></div></div>
+    <div class="card card-pad tc fade-in">
+      <div style="display:flex;justify-content:center">${progressRing(pct / 100, 110, 10)}</div>
+      <h2 class="mt-2">${right} of ${total} correct${challenge.xp ? ` · +${challenge.xp} XP` : ''}</h2>
+      <p class="muted" style="max-width:46ch;margin:8px auto 0">${verdict}</p>
+      <div class="flex gap-2 mt-4" style="justify-content:center;flex-wrap:wrap">
+        <a class="btn btn-primary" href="/challenge/${challenge.courseId}" data-nav>Retake challenge</a>
+        <a class="btn btn-outline" href="/course/${challenge.courseId}" data-nav>Back to course</a>
+      </div>
+    </div>
+    ${weakest.length ? `
+      <div class="card card-pad mt-3 fade-in">
+        <h4>Skills to revisit</h4>
+        ${weakest.map((r) => `
+          <a class="lesson-row mt-2" href="/practice/${r.skillId}" data-nav>
+            <span style="flex:1">${esc(r.skillName)}<div class="muted small">${esc(r.unit)}</div></span>
+            <span class="badge badge-muted">Practice</span>
+            ${icon('arrowR', 15)}
+          </a>`).join('')}
+      </div>` : ''}`;
 }
 
 // ---------- dashboard --------------------------------------------------------
