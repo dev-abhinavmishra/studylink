@@ -8,6 +8,16 @@ import { pageHelp, wireHelp, pageThread, wireThread, pageAsk, wireAsk, pageCoach
 const app = document.getElementById('app');
 const navHost = document.getElementById('navHost');
 const footHost = document.getElementById('footHost');
+const routeBar = document.getElementById('routeBar');
+let barTimer = null;
+function barStart() {
+  clearTimeout(barTimer);
+  barTimer = setTimeout(() => routeBar.classList.add('on'), 120); // don't flash for instant routes
+}
+function barDone() {
+  clearTimeout(barTimer);
+  routeBar.classList.remove('on');
+}
 
 function parseQuery() {
   return Object.fromEntries(new URLSearchParams(location.search));
@@ -16,6 +26,7 @@ function parseQuery() {
 const html = (s) => s;
 
 async function route() {
+  barStart();
   const path = location.pathname;
   const params = parseQuery();
   document.onkeydown = null; // clear practice shortcuts
@@ -97,6 +108,10 @@ async function route() {
   }
   document.title = title;
   app.innerHTML = page;
+  app.classList.remove('route-enter');
+  void app.offsetWidth; // restart the enter animation
+  app.classList.add('route-enter');
+  barDone();
   if (wire) await wire();
   window.scrollTo({ top: 0 });
 }
@@ -137,5 +152,9 @@ window.addEventListener('lumina:nav-refresh', () => {
   if (theme) document.documentElement.dataset.theme = theme;
   else if (window.matchMedia?.('(prefers-color-scheme: dark)').matches) document.documentElement.dataset.theme = 'dark';
   await refreshMe();
-  render();
+  renderNav();
+  footHost.innerHTML = footerHtml();
+  await route();
+  const boot = document.getElementById('boot');
+  if (boot) { boot.classList.add('out'); boot.addEventListener('transitionend', () => boot.remove(), { once: true }); setTimeout(() => boot.remove(), 900); }
 })();

@@ -13,12 +13,17 @@
   <link rel="stylesheet" href="/styles/app.css">
 </head>
 <body>
-  <div id="navHost"></div>
-  <div id="app">
-    <div class="boot-splash">
-      <div class="boot-logo"></div>
+  <div id="boot" class="boot-splash">
+    <div class="boot-inner">
+      <img class="boot-mark" src="/assets/logo.svg" alt="" width="60" height="60">
+      <div class="boot-name">Lumina</div>
+      <div class="boot-bar"><i></i></div>
+      <div class="boot-tag">Learn it. Solve it. Master it.</div>
     </div>
   </div>
+  <div id="routeBar" class="route-bar"><i></i></div>
+  <div id="navHost"></div>
+  <div id="app"></div>
   <div id="footHost"></div>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
   <script type="module" src="/app/app.js"></script>
