@@ -345,6 +345,8 @@ a.card-link:hover .card-title { color: var(--primary-ink); }
 .stat-pill .num { font-size: 1.3rem; font-weight: 800; display: block; line-height: 1.1; }
 .stat-pill .lbl { font-size: .72rem; text-transform: uppercase; letter-spacing: .07em; opacity: .8; }
 .mastery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
+.dash-cols { grid-template-columns: 1.4fr .9fr; gap: 28px; align-items: start; }
+@media (max-width: 960px) { .dash-cols { grid-template-columns: 1fr; } }
 .mastery-cell { padding: 16px; }
 .mastery-cell .top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
 .mastery-cell .pct { margin-left: auto; font-weight: 800; font-size: .95rem; }

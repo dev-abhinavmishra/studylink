@@ -364,7 +364,7 @@ export function pageDashboard(d) {
       <div style="color:#fff;position:relative;z-index:1">${progressRing(xpPct, 96, 9)}<div class="tc small" style="margin-top:4px">to level ${d.level + 1}</div></div>
     </div>
 
-    <div class="grid" style="grid-template-columns:1.4fr .9fr;gap:28px;align-items:start">
+    <div class="grid dash-cols">
       <div>
         ${d.upNext ? `
         <a class="card card-pad upnext card-link mb-3" href="/learn/${d.upNext.courseId}/${d.upNext.lessonId}" data-nav>
