@@ -25,6 +25,26 @@ const EQUATION_RE = /^(.*)=(.*)$/;
 const MATHY_RE = /^[\d\sxX+\-*/^().=,%]+$/;
 
 function tryMath(raw) {
+  // Natural-language percent: "what is 15% of 80", "20% off $45", "30% of 200"
+  const pct = raw.match(/(-?\d+(?:\.\d+)?)\s*%\s*(of|off)\s*\$?\s*(-?\d+(?:\.\d+)?)/i);
+  if (pct) {
+    const p = parseFloat(pct[1]), base = parseFloat(pct[3]);
+    const part = Math.round((p / 100) * base * 100) / 100;
+    if (pct[2].toLowerCase() === 'off') {
+      const price = Math.round((base - part) * 100) / 100;
+      return {
+        text: `$${p}\\%$ off $${base}$:\n\n`
+          + `**1.** Discount: $\\frac{${p}}{100} \\times ${base} = ${fmtNum(part)}$\n`
+          + `**2.** Final price: $${base} - ${fmtNum(part)} = \\boxed{${fmtNum(price)}}$`,
+        math: true
+      };
+    }
+    return {
+      text: `$${p}\\%$ of $${base}$ $= \\frac{${p}}{100} \\times ${base} = \\boxed{${fmtNum(part)}}$`,
+      math: true
+    };
+  }
+
   const text = raw.replace(/solve for x[:\s]*/i, '').replace(/solve[:\s]*/i, '')
     .replace(/what is|evaluate|compute|calculate/gi, '').trim();
   const eqMatch = text.match(EQUATION_RE);
@@ -40,7 +60,9 @@ function tryMath(raw) {
       const a = f1 - f0;
       const f2 = f.evaluate({ x: 2 });
       if (Math.abs(f2 - (f1 + a)) > 1e-9) {
-        return { text: `That equation isn't linear, so I can't isolate $x$ with a simple rule. Try asking about a specific topic — e.g. "explain factoring" — or a linear equation like \`3x + 5 = 20\`.` };
+        const quad = tryQuadratic(f, f0, f1, f2, lhs, rhs);
+        if (quad) return quad;
+        return { text: `That equation isn't linear or quadratic, so I can't isolate $x$ with a simple rule. Try asking about a specific topic — e.g. "explain factoring" — or an equation like \`3x + 5 = 20\` or \`x^2 + 5x + 6 = 0\`.` };
       }
       if (Math.abs(a) < 1e-12) {
         return Math.abs(f0) < 1e-12
@@ -73,6 +95,42 @@ function tryMath(raw) {
     } catch (e) { /* not math we can eval */ }
   }
   return null;
+}
+
+// Quadratic solver via second differences: if f(x) = ax²+bx+c, then
+// f(0)=c, a=(f(2)-2f(1)+f(0))/2, b=f(1)-f(0)-a. Verified against f(3).
+function tryQuadratic(f, f0, f1, f2, lhs, rhs) {
+  try {
+    const f3 = f.evaluate({ x: 3 });
+    const secondDiff = (f2 - f1) - (f1 - f0);
+    const secondDiff2 = (f3 - f2) - (f2 - f1);
+    if (Math.abs(secondDiff - secondDiff2) > 1e-9 || Math.abs(secondDiff) < 1e-12) return null;
+    const a = secondDiff / 2, c = f0, b = f1 - f0 - a;
+    const disc = b * b - 4 * a * c;
+    const fmtCoef = (v, vname) => {
+      const s = Math.abs(v);
+      if (!vname) return fmtNum(s);
+      if (s === 1) return vname;
+      return `${fmtNum(s)}${vname}`;
+    };
+    const poly = `${fmtCoef(a, 'x^2')} ${b >= 0 ? '+' : '-'} ${fmtCoef(b, 'x')} ${c >= 0 ? '+' : '-'} ${fmtNum(Math.abs(c))}`;
+    const head = `Solving $${lhs} = ${rhs}$ — rearranged: $${poly} = 0$\n\n`
+      + `**1.** Quadratic formula: $x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$ with $a=${fmtNum(a)},\\ b=${fmtNum(b)},\\ c=${fmtNum(c)}$\n`
+      + `**2.** Discriminant: $(${fmtNum(b)})^2 - 4(${fmtNum(a)})(${fmtNum(c)}) = ${fmtNum(disc)}$`;
+    if (disc < -1e-9) {
+      return { text: head + `\n**3.** Negative discriminant → **no real solutions** — the parabola never crosses the x-axis.`, math: true };
+    }
+    if (Math.abs(disc) < 1e-9) {
+      const x = -b / (2 * a);
+      return { text: head + `\n**3.** Zero discriminant → one repeated root: $x = \\frac{${fmtNum(-b)}}{${fmtNum(2 * a)}} = \\boxed{${fmtNum(x)}}$`, math: true };
+    }
+    const sq = Math.sqrt(disc);
+    const x1 = (-b + sq) / (2 * a), x2 = (-b - sq) / (2 * a);
+    return {
+      text: head + `\n**3.** Two roots: $x = \\frac{${fmtNum(-b)} \\pm ${fmtNum(Math.round(sq * 1e6) / 1e6)}}{${fmtNum(2 * a)}}$ → $x = \\boxed{${fmtNum(Math.round(x1 * 1e6) / 1e6)}}$ or $x = \\boxed{${fmtNum(Math.round(x2 * 1e6) / 1e6)}}$`,
+      math: true
+    };
+  } catch (e) { return null; }
 }
 
 function fmtNum(n) {
@@ -132,15 +190,17 @@ function respond(message, user, db) {
   if (/^(hi|hello|hey|yo|sup|good (morning|afternoon|evening))\b/.test(lower)) {
     return {
       text: `Hey${user ? ` ${user.name.split(' ')[0]}` : ''}! I'm **Coach**, your study assistant. I can:\n\n`
-        + '- **Solve math** — try `solve 3x + 5 = 20` or `12 × (4 + 7)`\n'
+        + '- **Solve math** — `solve 3x + 5 = 20`, `x^2 + 5x + 6 = 0`, or `what is 15% of 80`\n'
         + '- **Explain topics** — try "explain photosynthesis" or "what is a variable"\n'
         + '- **Find practice** — "practice factoring" or "quiz me on physics"\n'
         + '- **Build a plan** — "what should I study next?"\n\nWhat are you working on?'
     };
   }
 
-  // math
-  if (EQUATION_RE.test(text) || (MATHY_RE.test(text) && /\d/.test(text)) || /\b(solve|evaluate|compute|calculate)\b/i.test(lower) && /[\d+x=^]/.test(lower)) {
+  // math — equations, expressions, or natural percent phrasing
+  if (/\d+(?:\.\d+)?\s*%\s*(of|off)\s*\$?\s*\d/i.test(lower)
+    || EQUATION_RE.test(text) || (MATHY_RE.test(text) && /\d/.test(text))
+    || /\b(solve|evaluate|compute|calculate|percent|%)\b/i.test(lower) && /[\d+x=^%]/.test(lower)) {
     const m = tryMath(text);
     if (m) return m;
   }

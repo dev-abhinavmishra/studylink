@@ -511,11 +511,40 @@ app.get('/api/dashboard', requireAuth, (req, res) => {
     const d = new Date(Date.now() - (13 - i) * 86400000).toISOString().slice(0, 10);
     return { day: d, xp: activity.get(d) || 0 };
   });
+  const today = { xp: weekly[13].xp, goal: 50 };
+
+  // Suggested practice: weakest in-progress skills first, then untouched
+  // skills inside courses the user has already started.
+  const suggested = [];
+  const inProg = [...prog.entries()]
+    .filter(([id, p]) => p.level !== 'mastered' && skillIndex.has(id))
+    .map(([id, p]) => ({ id, p }));
+  inProg.sort((a, b) => (a.p.streak - b.p.streak) || (a.p.correct - b.p.correct));
+  for (const { id, p } of inProg) {
+    const hit = skillIndex.get(id);
+    if (!hit) continue;
+    suggested.push({ skillId: id, name: hit.skill.name, lessonTitle: hit.lesson.title, courseId: hit.course.id, level: p.level, streak: p.streak, kind: 'keep-going' });
+    if (suggested.length >= 3) break;
+  }
+  if (suggested.length < 3) {
+    for (const c of [...courseIndex.values()].map((h) => h.course)) {
+      const flat = c.units.flatMap((un) => un.lessons);
+      const started = flat.some((l) => visits.has(l.id));
+      if (!started) continue;
+      const next = flat.find((l) => l.skill && !prog.has(l.skill.id));
+      if (!next) continue;
+      const hit = skillIndex.get(next.skill.id);
+      suggested.push({ skillId: next.skill.id, name: next.skill.name, lessonTitle: next.title, courseId: c.id, level: 'new', streak: 0, kind: 'new-skill', courseTitle: hit?.course.title });
+      if (suggested.length >= 3) break;
+    }
+  }
+
   res.json({
     user: publicUser(u),
     xp, level: levelFromXp(xp), streakDays: streakDays(uid),
     xpToNext: (levelFromXp(xp) * (levelFromXp(xp) + 1) * 50) - xp,
-    continueLearning, bySubject, recentAttempts, weekly, upNext, bookmarks
+    continueLearning, bySubject, recentAttempts, weekly, upNext, bookmarks,
+    today, suggested
   });
 });
 

@@ -386,6 +386,17 @@ export function pageDashboard(d) {
           </a>`).join('')}</div>`
         : `<div class="card card-pad muted">No lessons yet — pick a course to get started. <a href="/subjects" data-nav>Browse subjects</a></div>`}
 
+        ${d.suggested?.length ? `
+        <h2 class="mt-4">Suggested practice</h2>
+        <div class="grid">
+          ${d.suggested.map((s) => `
+          <a class="lesson-row" href="/practice/${s.skillId}" data-nav>
+            <span class="m-dot" data-level="${s.level === 'new' ? '' : s.level}"></span>
+            <div><div class="lr-title">${esc(s.name)}</div><div class="lr-sub">${s.kind === 'keep-going' ? `Keep going — streak ${s.streak}/5` : `New in ${esc(s.courseTitle || '')}`}</div></div>
+            <div class="lr-right"><span class="upnext-badge" style="background:var(--primary-soft);color:var(--primary-ink)">${icon('zap', 12)} Practice</span></div>
+          </a>`).join('')}
+        </div>` : ''}
+
         <h2 class="mt-4">Mastery by subject</h2>
         <div class="mastery-grid">
           ${d.bySubject.map((s) => `
@@ -396,6 +407,18 @@ export function pageDashboard(d) {
         </div>
       </div>
       <div>
+        ${d.today ? `
+        <h2>Daily goal</h2>
+        <div class="card card-pad mb-3">
+          <div class="flex aic gap-2">
+            <span style="width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:${d.today.xp >= d.today.goal ? 'var(--m-mastered)' : 'var(--amber-soft)'};color:${d.today.xp >= d.today.goal ? '#fff' : 'var(--amber-deep)'};flex:none">${icon(d.today.xp >= d.today.goal ? 'check' : 'target', 18)}</span>
+            <div style="flex:1">
+              <div style="font-weight:700">${d.today.xp >= d.today.goal ? 'Goal reached — nice work' : `${d.today.xp} / ${d.today.goal} XP today`}</div>
+              <div class="muted small">${d.today.xp >= d.today.goal ? 'Anything more is bonus.' : `${d.today.goal - d.today.xp} XP to go`}</div>
+            </div>
+          </div>
+          <div class="progress-track mt-2"><div class="progress-fill" style="width:${Math.min(100, Math.round(100 * d.today.xp / d.today.goal))}%"></div></div>
+        </div>` : ''}
         <h2>This fortnight</h2>
         <div class="card card-pad mb-3">
           <div class="flex" style="align-items:flex-end;gap:6px;height:110px">
