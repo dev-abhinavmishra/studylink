@@ -18,7 +18,13 @@ if (isProd && !process.env.SESSION_SECRET) {
 
 app.set('trust proxy', 1); // needed for secure cookies behind a TLS-terminating proxy
 app.use(express.json({ limit: '256kb' }));
-app.use(express.static(path.join(process.cwd(), 'public')));
+app.use(express.static(path.join(process.cwd(), 'public'), {
+  // HTML/app shell revalidates every load; versioned-ish assets get a day.
+  setHeaders: (res, filePath) => {
+    if (filePath.includes(`${path.sep}assets${path.sep}`)) res.setHeader('Cache-Control', 'public, max-age=86400');
+    else res.setHeader('Cache-Control', 'no-cache');
+  }
+}));
 app.use(session({
   secret: process.env.SESSION_SECRET || 'lumina-dev-secret',
   resave: false,
@@ -784,9 +790,26 @@ app.post('/api/coach', (req, res) => {
   res.json({ reply });
 });
 
+// ---------- sitemap ----------------------------------------------------------
+
+app.get('/sitemap.xml', (req, res) => {
+  const urls = ['/', '/subjects', '/help', '/coach', '/about', '/faq', '/terms', '/privacy'];
+  for (const s of subjects) {
+    urls.push(`/subjects/${s.id}`);
+    for (const c of s.courses) {
+      urls.push(`/course/${c.id}`);
+      for (const u of c.units) for (const l of u.lessons) urls.push(`/learn/${c.id}/${l.id}`);
+    }
+  }
+  res.set('content-type', 'application/xml').send(
+    `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+    urls.map((u) => `  <url><loc>${u}</loc></url>`).join('\n') + '\n</urlset>'
+  );
+});
+
 // ---------- SPA fallback -----------------------------------------------------
 
-const SPA_ROUTES = /^\/(?!api\/|images\/|styles\/|app\/|assets\/|favicon).*/;
+const SPA_ROUTES = /^\/(?!api\/|images\/|styles\/|app\/|assets\/|favicon|robots\.txt$|sitemap\.xml$).*/;
 app.get(SPA_ROUTES, (req, res) => {
   res.sendFile(path.join(process.cwd(), 'public', 'index.html'));
 });

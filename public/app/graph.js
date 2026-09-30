@@ -109,9 +109,10 @@ export function mountGraphs(root = document) {
     const vals = {};
     Object.entries(cfg.sliders || {}).forEach(([k, s]) => { vals[k] = s.value ?? s.min ?? 0; });
     const sliders = cfg.sliders || {};
+    const ariaExpr = (cfg.expr || '').replace(/\*/g, ' times ').replace(/\^/g, ' to the power ');
     el.innerHTML = `
       <div class="lgraph-cap">${cfg.caption ? inlineMd(cfg.caption) : 'Drag the sliders — watch the curve.'}</div>
-      <canvas class="lgraph-cv" height="280"></canvas>
+      <canvas class="lgraph-cv" height="280" role="img" aria-label="Interactive graph of y = ${ariaExpr}. Sliders below adjust the parameters."></canvas>
       <div class="lgraph-eq" aria-live="polite"><span class="mono" id="leq"></span></div>
       ${Object.entries(sliders).map(([k, s]) => `
         <label class="lgraph-row">
