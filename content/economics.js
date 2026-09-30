@@ -970,6 +970,86 @@ module.exports = {
                 { type: 'p', text: 'The same math scales to subscriptions (cost per month you actually use), phones (total cost of ownership over the contract, not the sticker), and education (total cost including forgone earnings).' }
               ],
               skill: { id: 'unit-pricing-value', name: 'Compute unit prices', generator: 'ratioScale' }
+            },
+            {
+              id: 'marginal-tax-brackets',
+              title: 'How marginal tax brackets actually work',
+              minutes: 6,
+              summary: 'Only the income inside each bracket pays that rate — moving into a higher bracket never makes you poorer.',
+              tags: ['taxes', 'income', 'marginal rate'],
+              blocks: [
+                { type: 'p', text: 'The most persistent myth in personal finance: "earn more, hit a higher bracket, take home less." Tax brackets are **marginal** — each rate applies only to the slice of income inside that bracket. Only your top dollar is taxed at your top rate; the rest enjoyed lower rates all along.' },
+                { type: 'formula', text: '\\text{tax} = \\sum (\\text{income in bracket}) \\times (\\text{bracket rate}), \\qquad \\text{effective rate} = \\frac{\\text{tax}}{\\text{income}}' },
+                { type: 'example', title: 'Two brackets, $12,000 income', text: 'Say the first \\$10,000 is taxed at 10% and everything above at 20%. Tax on \\$12,000: $10{,}000 \\times 10\\% + 2{,}000 \\times 20\\% = 1{,}000 + 400 = \\$1{,}400$. Your **marginal** rate is 20% (the rate on the next dollar), but your **effective** rate is $1{,}400/12{,}000 \\approx 11.7\\%$.' },
+                { type: 'callout', kind: 'key', text: '**Marginal rate** = the rate on your next dollar of income — it drives decisions about overtime, raises, and deductions. **Effective rate** = your average rate across all income — it tells you what you actually paid.' },
+                { type: 'callout', kind: 'warning', text: 'A raise can never reduce your take-home pay by pushing you into a higher bracket — the new rate only touches the income above the threshold. (Benefit phase-outs are a separate real-world trap, but brackets alone never punish earning.)' },
+                { type: 'p', text: 'This is also why deductions are worth your **marginal** rate: a \\$1,000 deduction saves you 1,000 × marginal rate, not 1,000 × effective rate. Tax planning lives entirely at the margin.' }
+              ],
+              skill: {
+                id: 'marginal-tax',
+                name: 'Compute tax under brackets',
+                bank: [
+                  {
+                    type: 'numeric',
+                    prompt: 'Brackets: 10% on the first \\$10,000, 20% on income above that. What is the total tax on \\$15,000 of income, in dollars?',
+                    answer: 2000,
+                    tolerance: 0.001,
+                    hint: 'Split the income: 10,000 at 10% + 5,000 at 20%.',
+                    steps: [
+                      'First $10{,}000 \\times 10\\% = \\$1{,}000$.',
+                      'Remaining $5{,}000 \\times 20\\% = \\$1{,}000$.',
+                      'Total: $1{,}000 + 1{,}000 = \\$2{,}000$.'
+                    ],
+                    answerText: '$2,000'
+                  },
+                  {
+                    type: 'numeric',
+                    prompt: 'Same brackets (10% first \\$10,000, then 20%). What is the tax on \\$8,000, in dollars?',
+                    answer: 800,
+                    tolerance: 0.001,
+                    hint: 'All of it sits in the first bracket.',
+                    steps: [
+                      'The whole $8{,}000$ is inside the first bracket.',
+                      '$8{,}000 \\times 10\\% = \\$800$.'
+                    ],
+                    answerText: '$800'
+                  },
+                  {
+                    type: 'choice',
+                    prompt: 'Your salary crosses into a higher bracket. What happens?',
+                    choices: [
+                      { id: 'a', text: 'All your income is now taxed at the higher rate' },
+                      { id: 'b', text: 'Only the income above the threshold is taxed at the higher rate' },
+                      { id: 'c', text: 'Your take-home pay decreases' },
+                      { id: 'd', text: 'You should decline the raise' }
+                    ],
+                    answer: 'b',
+                    hint: 'Brackets are marginal — each rate covers only its slice.',
+                    steps: [
+                      'The higher rate applies only to income above the bracket threshold.',
+                      'Income below is still taxed at the old lower rates — you always take home more after a raise.'
+                    ],
+                    answerText: 'Only income above the threshold pays the higher rate'
+                  },
+                  {
+                    type: 'choice',
+                    prompt: 'Your effective tax rate is…',
+                    choices: [
+                      { id: 'a', text: 'the rate on your next dollar earned' },
+                      { id: 'b', text: 'the highest bracket you reach' },
+                      { id: 'c', text: 'total tax paid ÷ total income' },
+                      { id: 'd', text: 'the standard deduction rate' }
+                    ],
+                    answer: 'c',
+                    hint: '"Effective" means the average you actually paid.',
+                    steps: [
+                      'Effective rate = tax bill divided by income — your true average.',
+                      'The marginal rate is what your NEXT dollar pays; the two differ in any graduated system.'
+                    ],
+                    answerText: 'total tax ÷ total income'
+                  }
+                ]
+              }
             }
           ]
         }

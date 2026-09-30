@@ -1317,6 +1317,101 @@ module.exports = {
               }
             }
           ]
+        },
+        {
+          id: 'trigonometry',
+          title: 'Trigonometry on the unit circle',
+          lessons: [
+            {
+              id: 'unit-circle',
+              title: 'The unit circle',
+              minutes: 8,
+              summary: 'Angles live on the circle: the point where a ray at angle θ hits the unit circle is (cos θ, sin θ) — the functions ARE the coordinates.',
+              tags: ['precalculus', 'trigonometry', 'unit circle'],
+              blocks: [
+                { type: 'p', text: 'Draw a circle of radius 1 centered at the origin. Start a ray on the positive $x$-axis and rotate it counterclockwise through an angle $\\theta$. The point where the ray meets the circle has coordinates $(\\cos\\theta, \\sin\\theta)$ — cosine is the $x$-coordinate, sine is the $y$-coordinate.' },
+                { type: 'formula', text: '(\\cos\\theta,\\ \\sin\\theta) \\quad\\text{lies on}\\quad x^2 + y^2 = 1' },
+                { type: 'callout', kind: 'key', text: 'Because the hypotenuse is the radius $1$, the right-triangle ratios collapse to pure coordinates: $\\sin\\theta = \\frac{\\text{opposite}}{1} = y$ and $\\cos\\theta = \\frac{\\text{adjacent}}{1} = x$. This definition works for **any** angle — no triangle needed.' },
+                { type: 'list', items: ['$0$ → $(1,\\ 0)$', '$\\frac{\\pi}{6}\\ (30^\\circ)$ → $\\left(\\frac{\\sqrt{3}}{2},\\ \\frac{1}{2}\\right)$', '$\\frac{\\pi}{4}\\ (45^\\circ)$ → $\\left(\\frac{\\sqrt{2}}{2},\\ \\frac{\\sqrt{2}}{2}\\right)$', '$\\frac{\\pi}{3}\\ (60^\\circ)$ → $\\left(\\frac{1}{2},\\ \\frac{\\sqrt{3}}{2}\\right)$', '$\\frac{\\pi}{2}\\ (90^\\circ)$ → $(0,\\ 1)$'] },
+                { type: 'example', title: 'Read off sin 150°', text: '$150^\\circ$ sits in quadrant II. Its **reference angle** (the acute angle to the $x$-axis) is $30^\\circ$, whose point is $\\left(\\frac{\\sqrt{3}}{2}, \\frac{1}{2}\\right)$. In quadrant II, $x$ is negative and $y$ is positive, so $\\sin 150^\\circ = \\frac{1}{2}$ and $\\cos 150^\\circ = -\\frac{\\sqrt{3}}{2}$.' },
+                { type: 'callout', kind: 'tip', text: 'Every angle outside quadrant I reduces to a reference angle in quadrant I: find the acute angle to the $x$-axis, take its value, then apply the sign of your quadrant — $x$ negative in II/III, $y$ negative in III/IV.' },
+                { type: 'p', text: 'Two identities fall out of the picture for free. The circle equation itself gives $\\sin^2\\theta + \\cos^2\\theta = 1$. And since $y$ (sine) oscillates between $-1$ and $1$ as the point revolves, sine traced over time draws the wave behind springs, sound, and alternating current.' },
+                { type: 'callout', kind: 'warning', text: 'Degrees and radians measure the same angles differently: $180^\\circ = \\pi$ radians. $\\sin(90)$ means something entirely different from $\\sin(90^\\circ)$ — always check which mode a problem (or calculator) is using.' },
+                { type: 'graph', caption: 'Play with it: this is $y = a\\sin(x)$ — the curve traced by the moving point\'s height. Drag the amplitude negative and watch the wave flip.', expr: 'a*sin(x)', xrange: [0, 6.3], yrange: [-3, 3], sliders: { a: { min: -2.5, max: 2.5, step: 0.25, value: 1, label: 'amplitude a' } } }
+              ],
+              skill: {
+                id: 'unit-circle-values',
+                name: 'Evaluate sin and cos at key angles',
+                bank: [
+                  {
+                    type: 'choice',
+                    prompt: 'What is $\\cos(\\pi)$?',
+                    choices: [
+                      { id: 'a', text: '$1$' },
+                      { id: 'b', text: '$0$' },
+                      { id: 'c', text: '$-1$' },
+                      { id: 'd', text: '$\\frac{1}{2}$' }
+                    ],
+                    answer: 'c',
+                    hint: 'Where does a ray rotated 180° hit the circle?',
+                    steps: [
+                      'Angle $\\pi$ points along the negative $x$-axis.',
+                      'The intersection point is $(-1,\\ 0)$, and cosine is the $x$-coordinate.',
+                      '$\\cos(\\pi) = -1$.'
+                    ],
+                    answerText: '-1'
+                  },
+                  {
+                    type: 'numeric',
+                    prompt: 'Evaluate $\\sin\\left(\\frac{\\pi}{2}\\right)$.',
+                    answer: 1,
+                    tolerance: 0.001,
+                    hint: 'The ray points straight up.',
+                    steps: [
+                      'Angle $\\frac{\\pi}{2}$ reaches the top of the circle, point $(0,\\ 1)$.',
+                      'Sine is the $y$-coordinate: $\\sin\\frac{\\pi}{2} = 1$.'
+                    ],
+                    answerText: '1'
+                  },
+                  {
+                    type: 'choice',
+                    prompt: 'The point $(-1,\\ 0)$ on the unit circle corresponds to which angle?',
+                    choices: [
+                      { id: 'a', text: '$\\frac{\\pi}{2}$' },
+                      { id: 'b', text: '$\\pi$' },
+                      { id: 'c', text: '$2\\pi$' },
+                      { id: 'd', text: '$0$' }
+                    ],
+                    answer: 'b',
+                    hint: 'The point is on the far left.',
+                    steps: [
+                      '$(-1,\\ 0)$ is the leftmost point of the unit circle.',
+                      'A ray pointing left is rotated a half-turn from the $x$-axis: $\\pi$ radians.',
+                    ],
+                    answerText: 'π radians'
+                  },
+                  {
+                    type: 'choice',
+                    prompt: 'For any angle $\\theta$, what is $\\sin^2\\theta + \\cos^2\\theta$?',
+                    choices: [
+                      { id: 'a', text: '$0$' },
+                      { id: 'b', text: '$1$' },
+                      { id: 'c', text: '$\\theta$' },
+                      { id: 'd', text: 'Depends on the quadrant' }
+                    ],
+                    answer: 'b',
+                    hint: 'Every point satisfies the circle equation.',
+                    steps: [
+                      'The point is $(\\cos\\theta, \\sin\\theta)$ on $x^2 + y^2 = 1$.',
+                      'Substituting: $\\cos^2\\theta + \\sin^2\\theta = 1$ for every angle.',
+                      'This is the Pythagorean identity — the most-used trig fact there is.'
+                    ],
+                    answerText: '1'
+                  }
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -2125,6 +2220,93 @@ module.exports = {
                       'The positive critical point is $x = 1$.'
                     ],
                     answerText: '1'
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          id: 'integration',
+          title: 'Integration',
+          lessons: [
+            {
+              id: 'integrals-as-area',
+              title: 'Integrals: accumulation and area',
+              minutes: 9,
+              summary: 'The definite integral ∫ f(x) dx measures accumulated change — geometrically, the signed area between the curve and the x-axis.',
+              tags: ['calculus', 'integrals', 'area'],
+              blocks: [
+                { type: 'p', text: 'Derivatives sliced functions into instants of change; **integrals** do the reverse — they accumulate countless small contributions into a total. Add up the area of thin rectangles under a curve, shrink them to zero width, and the limit is the **definite integral** $\\int_a^b f(x)\\,dx$: the signed area between the curve and the $x$-axis from $a$ to $b$.' },
+                { type: 'formula', text: '\\int_a^b f(x)\\,dx = F(b) - F(a), \\quad\\text{where } F\'(x) = f(x)' },
+                { type: 'callout', kind: 'key', text: 'The **Fundamental Theorem of Calculus** is the miracle: to compute an accumulated area, find any **antiderivative** $F$ (a function whose derivative is $f$) and subtract its endpoint values. Differentiation and integration are inverse operations.' },
+                { type: 'callout', kind: 'tip', text: 'The power rule run backward gives the workhorse antiderivative: $\\int x^n\\,dx = \\frac{x^{n+1}}{n+1} + C$ for any $n \\ne -1$. The $+C$ records that antiderivatives differ by a constant — it cancels in definite integrals.' },
+                { type: 'example', title: 'Area under y = x from 0 to 3', text: '$\\int_0^3 x\\,dx = \\left[\\frac{x^2}{2}\\right]_0^3 = \\frac{9}{2} - 0 = 4.5$. Check with geometry: the region is a triangle with base 3 and height 3, area $\\frac{1}{2} \\cdot 3 \\cdot 3 = 4.5$ ✓' },
+                { type: 'example', title: 'Accumulating velocity into distance', text: 'If velocity is $v(t) = 3t^2$ m/s, distance traveled in the first 2 seconds is $\\int_0^2 3t^2\\,dt = [t^3]_0^2 = 8$ m. The integral of a rate gives the total change.' },
+                { type: 'callout', kind: 'warning', text: 'The integral counts area **below** the axis as negative — it is signed accumulation, not literal area. For total geometric area, split the integral where the curve crosses the axis.' },
+                { type: 'graph', caption: 'Play with it: $y = a\\cdot x^2 + c$. The area between the curve and the axis from 0 to the right edge is what $\\int_0^b (ax^2+c)\\,dx$ computes.', expr: 'a*x^2+c', xrange: [-3, 3], yrange: [-2, 10], sliders: { a: { min: -1, max: 2, step: 0.25, value: 1, label: 'stretch a' }, c: { min: -2, max: 4, step: 0.5, value: 1, label: 'shift c' } } }
+              ],
+              skill: {
+                id: 'antiderivative-power',
+                name: 'Antiderivatives with the power rule',
+                bank: [
+                  {
+                    type: 'numeric',
+                    prompt: 'Evaluate $\\displaystyle\\int_0^2 x\\,dx$.',
+                    answer: 2,
+                    tolerance: 0.001,
+                    hint: 'Antiderivative of x is x²/2; evaluate at 2 and 0.',
+                    steps: [
+                      '$\\int x\\,dx = \\frac{x^2}{2}$.',
+                      '$\\left[\\frac{x^2}{2}\\right]_0^2 = \\frac{4}{2} - 0 = 2$.'
+                    ],
+                    answerText: '2'
+                  },
+                  {
+                    type: 'numeric',
+                    prompt: 'Evaluate $\\displaystyle\\int_0^1 x^2\\,dx$. Round to three decimals.',
+                    answer: 0.333,
+                    tolerance: 0.001,
+                    hint: 'Antiderivative of x² is x³/3.',
+                    steps: [
+                      '$\\int x^2\\,dx = \\frac{x^3}{3}$.',
+                      '$\\left[\\frac{x^3}{3}\\right]_0^1 = \\frac{1}{3} - 0 = \\frac{1}{3} \\approx 0.333$.'
+                    ],
+                    answerText: '1/3 ≈ 0.333'
+                  },
+                  {
+                    type: 'choice',
+                    prompt: 'What is $\\int 3x^2\\,dx$?',
+                    choices: [
+                      { id: 'a', text: '$6x + C$' },
+                      { id: 'b', text: '$x^3 + C$' },
+                      { id: 'c', text: '$3x^3 + C$' },
+                      { id: 'd', text: '$x^2 + C$' }
+                    ],
+                    answer: 'b',
+                    hint: 'Add 1 to the exponent, divide by it.',
+                    steps: [
+                      'Power rule backward: $\\int 3x^2\\,dx = 3\\cdot\\frac{x^3}{3} + C = x^3 + C$.',
+                      'Check by differentiating: $\\frac{d}{dx}(x^3 + C) = 3x^2$ ✓'
+                    ],
+                    answerText: 'x³ + C'
+                  },
+                  {
+                    type: 'choice',
+                    prompt: 'By the Fundamental Theorem of Calculus, $\\int_a^b f(x)\\,dx$ equals…',
+                    choices: [
+                      { id: 'a', text: '$F(a) - F(b)$ where $F\' = f$' },
+                      { id: 'b', text: '$F(b) - F(a)$ where $F\' = f$' },
+                      { id: 'c', text: '$f(b) - f(a)$' },
+                      { id: 'd', text: '$f\'(b) - f\'(a)$' }
+                    ],
+                    answer: 'b',
+                    hint: 'Top limit first, and you need the antiderivative — not f itself.',
+                    steps: [
+                      'FTC: find $F$ with $F\' = f$, then compute $F(b) - F(a)$.',
+                      'Order matters: the value at the **upper** limit comes first.'
+                    ],
+                    answerText: 'F(b) − F(a), where F\' = f'
                   }
                 ]
               }

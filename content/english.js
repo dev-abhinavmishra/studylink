@@ -1652,6 +1652,96 @@ module.exports = {
                   }
                 ]
               }
+            },
+            {
+              id: 'counterarguments',
+              title: 'Counterarguments and rebuttals',
+              minutes: 6,
+              summary: 'Strong essays concede the best opposing point — then answer it. Steelmanning builds credibility; strawmanning destroys it.',
+              tags: ['writing', 'argument', 'rhetoric'],
+              blocks: [
+                { type: 'p', text: 'A one-sided argument invites the reader to supply the objection you ignored. A **counterargument paragraph** does the opposite: it names the strongest opposing claim, concedes whatever part of it is true, and then *rebuts* it with reasoning or evidence. Far from weakening your essay, it proves you have examined the question honestly.' },
+                { type: 'callout', kind: 'key', text: 'The structure is three moves: **concede** ("Critics rightly note that…"), **rebut** ("However, the evidence shows…"), **return** ("The thesis stands because…"). Each move gets at least a sentence — skipping the concession makes the paragraph a strawman.' },
+                { type: 'example', title: 'Skeleton paragraph', text: '*"Some argue that school uniforms suppress self-expression. That concern is real — clothing is a genuine outlet for adolescents. However, studies find uniforms reduce visible economic stratification and morning-decision fatigue, and students retain expression through hairstyle, art, and speech. On balance, the gains in equity outweigh the limited cost."*' },
+                { type: 'callout', kind: 'warning', text: 'A **strawman** misstates the opposing view to make it easy to defeat — readers who hold the real position notice immediately and discount everything else you wrote. If your version of the other side would make its own advocates wince, rewrite it until they would sign it.' },
+                { type: 'callout', kind: 'tip', text: 'Choose the **strongest** objection, not the weakest. Rebutting "uniforms are ugly" persuades nobody; rebutting "uniforms suppress identity" does real work. Also hedge precisely — "frequently", "in controlled studies" — rather than hedging vaguely or not at all.' },
+                { type: 'p', text: 'Placement matters: in a short essay the counterargument usually sits between your strongest point and the conclusion, where it still has room to breathe. In longer arguments you may concede-and-rebut once per major section.' }
+              ],
+              skill: {
+                id: 'counterarguments',
+                name: 'Handle counterarguments',
+                bank: [
+                  {
+                    type: 'choice',
+                    prompt: 'Which sentence is a proper **rebuttal** move?',
+                    choices: [
+                      { id: 'a', text: '"Critics argue that remote work weakens mentorship."' },
+                      { id: 'b', text: '"However, distributed teams in the cited study retained mentorship quality through structured pairing."' },
+                      { id: 'c', text: '"This essay has three parts."' },
+                      { id: 'd', text: '"In conclusion, remote work is good."' }
+                    ],
+                    answer: 'b',
+                    hint: 'The rebuttal answers the objection with evidence.',
+                    steps: [
+                      'a is the concession — it states the objection.',
+                      'b answers it with evidence — that is the rebuttal.',
+                      'The full sequence is concede → rebut → return to thesis.'
+                    ],
+                    answerText: 'the "However…" sentence with evidence'
+                  },
+                  {
+                    type: 'choice',
+                    prompt: 'What is a strawman argument?',
+                    choices: [
+                      { id: 'a', text: 'Quoting an opponent exactly' },
+                      { id: 'b', text: 'Admitting the opposing view has merit' },
+                      { id: 'c', text: 'Misrepresenting the opposing view so it is easy to defeat' },
+                      { id: 'd', text: 'Using too many statistics' }
+                    ],
+                    answer: 'c',
+                    hint: 'It looks like the real argument but is made of straw.',
+                    steps: [
+                      'A strawman substitutes a weaker, distorted version of the opposition for the real one.',
+                      'It fails rhetorically: informed readers reject the whole essay once they spot it.'
+                    ],
+                    answerText: 'misrepresenting the opposing view'
+                  },
+                  {
+                    type: 'choice',
+                    prompt: 'Where does a counterargument paragraph usually belong in a short essay?',
+                    choices: [
+                      { id: 'a', text: 'Before the thesis statement' },
+                      { id: 'b', text: 'Between the strongest body point and the conclusion' },
+                      { id: 'c', text: 'In the introduction, as the hook' },
+                      { id: 'd', text: 'In a footnote' }
+                    ],
+                    answer: 'b',
+                    hint: 'It needs room to breathe but must not end the essay on the opponent\'s terms.',
+                    steps: [
+                      'After your main argument is established, the counterargument gets answered — then the conclusion lands your thesis.',
+                      'Leading with it buries your claim; ending with it ends the essay on the objection.'
+                    ],
+                    answerText: 'before the conclusion, after the main argument'
+                  },
+                  {
+                    type: 'choice',
+                    prompt: 'Which objection is the STRONGEST choice to rebut in an essay favoring four-day school weeks?',
+                    choices: [
+                      { id: 'a', text: '"Some people just dislike change."' },
+                      { id: 'b', text: '"Four-day weeks can compress instructional time and strain childcare for working families."' },
+                      { id: 'c', text: '"A five-day week is what we have always done."' },
+                      { id: 'd', text: '"Students might be bored on Fridays."' }
+                    ],
+                    answer: 'b',
+                    hint: 'Pick the objection that serious opponents actually make.',
+                    steps: [
+                      'b raises real stakes — learning time and childcare — that advocates must genuinely answer.',
+                      'a, c, and d are weak targets: rebutting them persuades no one.'
+                    ],
+                    answerText: 'the childcare/instructional-time objection'
+                  }
+                ]
+              }
             }
           ]
         }

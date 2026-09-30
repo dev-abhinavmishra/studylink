@@ -630,6 +630,84 @@ module.exports = {
                   }
                 ]
               }
+            },
+            {
+              id: 'conservation-of-energy',
+              title: 'Conservation of energy',
+              minutes: 8,
+              summary: 'Energy is never created or destroyed — only transformed. When only gravity acts, potential and kinetic trade cleanly: mgh + ½mv² stays constant.',
+              tags: ['physics', 'energy', 'conservation'],
+              blocks: [
+                { type: 'p', text: 'Energy is the universe\'s most careful accountant: it is never created or destroyed, only **transformed**. Drop a ball and gravitational potential energy becomes kinetic energy; slam the brakes and kinetic becomes heat; charge a phone and electrical energy becomes chemical. The bookkeeping rule is conservation: in a closed system, the total is constant.' },
+                { type: 'formula', text: 'mgh_i + \\tfrac{1}{2}mv_i^2 = mgh_f + \\tfrac{1}{2}mv_f^2' },
+                { type: 'callout', kind: 'key', text: 'When **only gravity does work**, mechanical energy is conserved: whatever potential energy $PE = mgh$ is lost becomes kinetic energy $KE = \\frac{1}{2}mv^2$, and vice versa. Mass often cancels entirely — which is why a dropped hammer and feather fall together in vacuum.' },
+                { type: 'example', title: 'Speed of a dropped ball', text: 'A ball falls 5 m from rest. With $g = 9.8$ m/s²: $mgh = \\frac{1}{2}mv^2$ gives $v = \\sqrt{2gh} = \\sqrt{2 \\cdot 9.8 \\cdot 5} = \\sqrt{98} \\approx 9.9$ m/s. Notice $m$ vanished — the answer never depended on the ball\'s mass.' },
+                { type: 'example', title: 'Roller coaster sanity check', text: 'A coaster cresting a 30 m hill at 2 m/s drops to ground level. $v_f = \\sqrt{v_i^2 + 2gh} = \\sqrt{4 + 2 \\cdot 9.8 \\cdot 30} \\approx 24.4$ m/s — the deepest point is always the fastest, because the most PE has converted to KE.' },
+                { type: 'callout', kind: 'warning', text: 'Conservation applies to the **total**, not to mechanical energy alone. Friction and air resistance drain mechanical energy into heat, so real-world coasters end each hill slightly slower than the ideal $v = \\sqrt{2gh}$ predicts. "Energy loss" always means "energy moved somewhere else."' }
+              ],
+              skill: {
+                id: 'conservation-energy',
+                name: 'Apply conservation of energy',
+                bank: [
+                  {
+                    type: 'numeric',
+                    prompt: 'A $2$ kg book sits on a shelf $10$ m high. Using $g = 10$ m/s², what is its gravitational potential energy in joules?',
+                    answer: 200,
+                    tolerance: 0.001,
+                    hint: 'PE = mgh.',
+                    steps: [
+                      '$PE = mgh = 2 \\times 10 \\times 10 = 200$ J.'
+                    ],
+                    answerText: '200 J'
+                  },
+                  {
+                    type: 'numeric',
+                    prompt: 'A ball is dropped from rest at $h = 5$ m. Using $g = 10$ m/s² and ignoring air resistance, what is its speed at the ground, in m/s?',
+                    answer: 10,
+                    tolerance: 0.001,
+                    hint: 'Set mgh = ½mv² and solve for v.',
+                    steps: [
+                      'Conservation: $mgh = \\frac{1}{2}mv^2$, so $v = \\sqrt{2gh}$.',
+                      '$v = \\sqrt{2 \\times 10 \\times 5} = \\sqrt{100} = 10$ m/s.'
+                    ],
+                    answerText: '10 m/s'
+                  },
+                  {
+                    type: 'choice',
+                    prompt: 'A pendulum at the highest point of its swing has maximum…',
+                    choices: [
+                      { id: 'a', text: 'kinetic energy' },
+                      { id: 'b', text: 'potential energy' },
+                      { id: 'c', text: 'speed' },
+                      { id: 'd', text: 'momentum' }
+                    ],
+                    answer: 'b',
+                    hint: 'It is momentarily at rest up there.',
+                    steps: [
+                      'At the top of the swing the pendulum is momentarily stationary — zero KE.',
+                      'All its energy is gravitational potential energy at that instant.'
+                    ],
+                    answerText: 'potential energy'
+                  },
+                  {
+                    type: 'choice',
+                    prompt: 'Why is a roller coaster fastest at the LOWEST point of its track?',
+                    choices: [
+                      { id: 'a', text: 'Gravity is stronger at low altitudes' },
+                      { id: 'b', text: 'The track is smoothest there' },
+                      { id: 'c', text: 'The most potential energy has converted to kinetic energy' },
+                      { id: 'd', text: 'The cars are lightest there' }
+                    ],
+                    answer: 'c',
+                    hint: 'Where has the height loss been largest?',
+                    steps: [
+                      'Every meter of height lost becomes kinetic energy: $\\frac{1}{2}mv^2 = mg\\Delta h$.',
+                      'The lowest point has seen the most conversion — hence the highest speed.'
+                    ],
+                    answerText: 'Most PE converted to KE'
+                  }
+                ]
+              }
             }
           ]
         }
@@ -2292,6 +2370,96 @@ module.exports = {
                       'The dark color was heritable, not painted on by soot.'
                     ],
                     answerText: 'Better camouflage → more survivors'
+                  }
+                ]
+              }
+            },
+            {
+              id: 'protein-synthesis',
+              title: 'Protein synthesis: DNA to protein',
+              minutes: 8,
+              summary: 'The central dogma: DNA is transcribed to mRNA in the nucleus, then translated codon-by-codon into a protein at the ribosome.',
+              tags: ['biology', 'genetics', 'proteins'],
+              blocks: [
+                { type: 'p', text: 'Genes do nothing until they are **expressed**. The journey from gene to working molecule follows the **central dogma**: DNA is *transcribed* into a messenger RNA copy, and that mRNA is *translated* into a chain of amino acids — a protein.' },
+                { type: 'callout', kind: 'key', text: '**Transcription** happens in the nucleus: the enzyme RNA polymerase reads a DNA strand and builds a complementary mRNA, swapping T for U (RNA uses uracil instead of thymine). The mRNA then exits to the cytoplasm.' },
+                { type: 'callout', kind: 'key', text: '**Translation** happens at the ribosome: the mRNA is read three bases at a time — each three-letter **codon** specifies one amino acid. tRNA molecules deliver the matching amino acids, which link into a growing protein chain.' },
+                { type: 'formula', text: '\\text{DNA} \\xrightarrow{\\text{transcription}} \\text{mRNA} \\xrightarrow{\\text{translation}} \\text{protein}' },
+                { type: 'example', title: 'Read a short gene', text: 'DNA template strand **TAC AAA GGT** transcribes to mRNA **AUG UUU CCA** (A↔U, T↔A, G↔C). AUG is the universal **start codon** (methionine), UUU codes phenylalanine, CCA codes proline — the ribosome builds Met–Phe–Pro.' },
+                { type: 'list', items: ['1. Transcription: RNA polymerase copies one gene into mRNA', '2. Processing: the mRNA is edited and exported from the nucleus', '3. Translation: ribosome reads codons, tRNA brings amino acids', '4. Folding: the amino acid chain folds into a working protein'] },
+                { type: 'callout', kind: 'warning', text: 'A single **point mutation** changes one codon, which can swap one amino acid — usually harmless, occasionally devastating. Sickle-cell disease traces to exactly one such substitution: GAG (glutamate) → GUG (valine) in the hemoglobin gene.' }
+              ],
+              skill: {
+                id: 'protein-synthesis',
+                name: 'Trace DNA → mRNA → protein',
+                bank: [
+                  {
+                    type: 'choice',
+                    prompt: 'A DNA template strand reads TAC. What mRNA codon is transcribed from it?',
+                    choices: [
+                      { id: 'a', text: 'ATG' },
+                      { id: 'b', text: 'TAC' },
+                      { id: 'c', text: 'AUG' },
+                      { id: 'd', text: 'UAC' }
+                    ],
+                    answer: 'c',
+                    hint: 'Pair each base — and remember RNA uses U, not T.',
+                    steps: [
+                      'Base pairing: T→A, A→U, C→G.',
+                      'TAC transcribes to AUG — conveniently, the start codon.'
+                    ],
+                    answerText: 'AUG'
+                  },
+                  {
+                    type: 'choice',
+                    prompt: 'One codon — one amino acid — is made of how many mRNA bases?',
+                    choices: [
+                      { id: 'a', text: '1' },
+                      { id: 'b', text: '2' },
+                      { id: 'c', text: '3' },
+                      { id: 'd', text: '4' }
+                    ],
+                    answer: 'c',
+                    hint: '4 bases must encode 20 amino acids — how many per group?',
+                    steps: [
+                      'Singles give only 4 codes; pairs give $4^2 = 16$ — not enough for 20 amino acids.',
+                      'Triplets give $4^3 = 64$ codes — enough, with redundancy. Codons are 3 bases.'
+                    ],
+                    answerText: '3 bases'
+                  },
+                  {
+                    type: 'choice',
+                    prompt: 'Where in the cell does translation occur?',
+                    choices: [
+                      { id: 'a', text: 'In the nucleus' },
+                      { id: 'b', text: 'At the ribosome in the cytoplasm' },
+                      { id: 'c', text: 'In the mitochondria only' },
+                      { id: 'd', text: 'On the cell membrane' }
+                    ],
+                    answer: 'b',
+                    hint: 'mRNA has to leave the nucleus first.',
+                    steps: [
+                      'Transcription is nuclear; translation is not.',
+                      'mRNA exits to the cytoplasm, where ribosomes read it codon by codon.'
+                    ],
+                    answerText: 'the ribosome'
+                  },
+                  {
+                    type: 'choice',
+                    prompt: 'The codon AUG is special because it…',
+                    choices: [
+                      { id: 'a', text: 'stops the protein chain' },
+                      { id: 'b', text: 'codes for the final amino acid' },
+                      { id: 'c', text: 'is the start codon, coding for methionine' },
+                      { id: 'd', text: 'is found only in DNA' }
+                    ],
+                    answer: 'c',
+                    hint: 'Every protein begins the same way.',
+                    steps: [
+                      'AUG signals "start here" AND adds methionine as the first amino acid.',
+                      'Stop codons are the opposite role: UAA, UAG, UGA end the chain.'
+                    ],
+                    answerText: 'start codon → methionine'
                   }
                 ]
               }

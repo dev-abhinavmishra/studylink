@@ -4,11 +4,13 @@
 
 import { inlineMd } from './markdown.js';
 
-const SAFE = /^[\d\sxabcd+\-*/().,^]+$/;
+const SAFE = /^[\d\sxabcdsincotqr+\-*/().,^]+$/;
+const FUNCS = /\b(sin|cos|tan|sqrt|abs)(?=\()/g;
 
 function compile(expr) {
-  const body = String(expr).replace(/\^/g, '**');
+  let body = String(expr).replace(/\^/g, '**');
   if (!SAFE.test(body)) return () => NaN;
+  body = body.replace(FUNCS, 'Math.$1');
   try {
     const f = new Function('x', 'a', 'b', 'c', 'd', `"use strict"; return (${body});`);
     if (!Number.isFinite(f(1, 1, 1, 1, 1))) return () => NaN;
