@@ -167,7 +167,8 @@ module.exports = {
                 { type: 'p', text: 'The **zero-product property** is the reason factoring matters: if $A \\cdot B = 0$, then $A = 0$ or $B = 0$ (or both). Nothing else works that way — if $A \\cdot B = 6$, neither factor has to be 6.' },
                 { type: 'example', title: 'Solve x² + 7x + 10 = 0', text: 'Factor: $(x+2)(x+5) = 0$. Set each factor to zero: $x + 2 = 0$ or $x + 5 = 0$, so $x = -2$ or $x = -5$.' },
                 { type: 'p', text: 'A quadratic can have two solutions, one repeated solution (when both factors are identical, like $(x-3)^2 = 0$), or no real solutions at all.' },
-                { type: 'callout', kind: 'warning', text: 'The equation must equal **zero** before factoring helps. For $x^2 + 5x = 14$, first move the 14: $x^2 + 5x - 14 = 0$, then factor.' }
+                { type: 'callout', kind: 'warning', text: 'The equation must equal **zero** before factoring helps. For $x^2 + 5x = 14$, first move the 14: $x^2 + 5x - 14 = 0$, then factor.' },
+                { type: 'graph', caption: 'Play with it: solutions of $ax^2+bx+c=0$ are exactly where the parabola crosses the $x$-axis. Slide $c$ until the curve lifts off the axis — no real solutions left.', expr: 'a*x^2+b*x+c', xrange: [-10, 10], yrange: [-20, 20], sliders: { a: { min: -2, max: 2, step: 0.5, value: 1, label: 'a' }, b: { min: -8, max: 8, step: 0.5, value: 1, label: 'b' }, c: { min: -15, max: 10, step: 0.5, value: -6, label: 'c' } } }
               ],
               skill: { id: 'solve-quadratics', name: 'Solving quadratics', generator: 'quadraticSolve' }
             }

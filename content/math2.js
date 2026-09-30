@@ -373,6 +373,7 @@ module.exports = {
                 { type: 'callout', kind: 'key', text: 'Positive slope rises left to right; negative slope falls. A horizontal line has slope $0$ (no rise); a vertical line\'s slope is **undefined** — the run is $0$ and division by zero is impossible.' },
                 { type: 'example', title: 'Slope between two points', text: 'Through $(2, 3)$ and $(6, 11)$: $m = \\frac{11 - 3}{6 - 2} = \\frac{8}{4} = 2$. The line climbs 2 units for every 1 unit right.' },
                 { type: 'p', text: 'Slope is really a **rate of change**. A slope of 2 means $y$ grows twice as fast as $x$ — the same idea as miles per hour or price per pound, just drawn on a grid.' },
+                { type: 'graph', caption: 'Play with it: drag the slope and intercept and watch the line respond. Try making the line fall instead of rise.', expr: 'a*x+b', xrange: [-10, 10], yrange: [-10, 10], sliders: { a: { min: -4, max: 4, step: 0.5, value: 2, label: 'slope m' }, b: { min: -6, max: 6, step: 0.5, value: 1, label: 'y-intercept b' } } },
                 { type: 'callout', kind: 'warning', text: 'Keep the order consistent: whichever point supplies $y_2$ must supply $x_2$. Mixing $\\frac{y_2 - y_1}{x_1 - x_2}$ flips the sign — a small slip, a wrong answer.' }
               ],
               skill: { id: 'slope-from-points', name: 'Slope from two points', generator: 'slopeFromPoints' }
@@ -1069,7 +1070,8 @@ module.exports = {
                 { type: 'example', title: 'Doubling population', text: '$P(t) = 1000 \\cdot 2^{t}$: after 4 years, $P(4) = 1000 \\cdot 16 = 16{,}000$. Each year multiplies the count — year 3 to 4 alone adds 8,000.' },
                 { type: 'example', title: 'Half-life decay', text: 'A 500 g sample halves each day: $500 \\cdot \\left(\\frac{1}{2}\\right)^{3} = 500 \\cdot \\frac{1}{8} = 62.5$ g after 3 days.' },
                 { type: 'p', text: 'Why "exponential" feels explosive: the increments grow in proportion to the current size, so the curve bends upward ever faster. Interest compounds, bacteria multiply, and viral videos spread this way — small percentages, repeated, beat big one-time additions.' },
-                { type: 'callout', kind: 'warning', text: 'The exponent applies to the **factor**, not the value: $a \\cdot b^t$ means $a$ times $b^t$, not $(a \\cdot b)^t$. $100 \\cdot 2^3 = 800$, not $200^3$.' }
+                { type: 'callout', kind: 'warning', text: 'The exponent applies to the **factor**, not the value: $a \\cdot b^t$ means $a$ times $b^t$, not $(a \\cdot b)^t$. $100 \\cdot 2^3 = 800$, not $200^3$.' },
+                { type: 'graph', caption: 'Play with it: this is $y = a \\cdot b^x$ live. Drag the growth factor below 1 and watch growth become decay.', expr: 'a*b^x', xrange: [0, 10], yrange: [0, 1000], sliders: { a: { min: 50, max: 500, step: 25, value: 100, label: 'start a' }, b: { min: 0.2, max: 2.5, step: 0.1, value: 2, label: 'factor b' } } }
               ],
               skill: {
                 id: 'exponential-growth',

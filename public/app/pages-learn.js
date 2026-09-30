@@ -2,6 +2,7 @@ import { icon } from './icons.js';
 import { esc, toast, go, masteryDot, masteryTag, progressRing, emptyState, crumbs, skeletons } from './ui.js';
 import { api, state, recordGuestAttempt, guestSkillLevel } from './api.js';
 import { renderBlocks, inlineMd } from './markdown.js';
+import { mountGraphs } from './graph.js';
 
 // ---------- catalog -------------------------------------------------------
 
@@ -148,6 +149,7 @@ export function pageLesson(data) {
 }
 
 export async function wireLesson(lessonId) {
+  mountGraphs();
   try { await api('POST', `/api/lessons/${lessonId}/visit`); } catch { /* guest */ }
   const bkm = document.getElementById('bkmBtn');
   if (bkm) bkm.onclick = async () => {

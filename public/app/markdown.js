@@ -98,6 +98,8 @@ export function renderBlocks(blocks) {
         return `<div class="formula-block">${renderMath(b.text, true)}</div>`;
       case 'code':
         return `<pre class="code-block"><span class="code-lang">${esc(b.lang || 'code')}</span>${esc(b.text)}</pre>`;
+      case 'graph':
+        return `<div class="lgraph" data-graph="${encodeURIComponent(JSON.stringify(b))}"></div>`;
       default: return b.text ? `<p>${inlineMd(b.text)}</p>` : '';
     }
   }).join('\n');
