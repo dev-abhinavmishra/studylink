@@ -149,6 +149,7 @@ export async function wireLesson(lessonId) {
       const r = await api('POST', `/api/lessons/${lessonId}/bookmark`);
       bkm.classList.toggle('saved', !!r.bookmarked);
       bkm.setAttribute('aria-pressed', r.bookmarked ? 'true' : 'false');
+      bkm.title = r.bookmarked ? 'Remove bookmark' : 'Save for later';
       bkm.querySelector('.bkm-lbl').textContent = r.bookmarked ? 'Saved' : 'Save';
       if (r.bookmarked) toast('Saved — find it on your dashboard', '');
     } catch {
