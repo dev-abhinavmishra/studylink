@@ -4,10 +4,13 @@
 const SUBJECT_FILES = [
   'math',
   'math2',
+  'math3',
   'science',
   'computing',
+  'comp2',
   'humanities',
   'economics',
+  'econ2',
   'english'
 ];
 

@@ -494,6 +494,239 @@ const GENERATORS = {
       steps: [`$\\text{yield} = \\frac{${actual}}{${theory}} \\times 100 = ${pct}\\%$`],
       answerText: `${pct}%`
     };
+  },
+
+  // ---- Statistics & probability ------------------------------------------
+
+  meanMedian() {
+    const n = pick([5, 5, 7]);
+    const data = Array.from({ length: n }, () => rint(1, 20));
+    const askMean = Math.random() < 0.5;
+    const list = data.join(', ');
+    if (askMean) {
+      const sum = data.reduce((a, b) => a + b, 0);
+      const mean = Math.round((sum / n) * 100) / 100;
+      return {
+        type: 'numeric',
+        prompt: `Find the **mean** of: $${list}$`,
+        answer: mean, tolerance: 0.051,
+        hint: 'Add all values, divide by how many there are.',
+        steps: [
+          `Sum: $${data.join(' + ')} = ${sum}$`,
+          `Divide by $${n}$: $\\bar{x} = \\frac{${sum}}{${n}} = ${mean}$`
+        ],
+        answerText: `${mean}`
+      };
+    }
+    const sorted = data.slice().sort((a, b) => a - b);
+    const med = sorted[(n - 1) / 2];
+    return {
+      type: 'numeric',
+      prompt: `Find the **median** of: $${list}$`,
+      answer: med, tolerance: 0.001,
+      hint: 'Sort the values first, then take the middle one.',
+      steps: [
+        `Sorted: $${sorted.join(', ')}$`,
+        `With $${n}$ values, the median is the middle one: $${med}$`
+      ],
+      answerText: `${med}`
+    };
+  },
+
+  rangeIqr() {
+    const data = Array.from({ length: 7 }, () => rint(2, 40));
+    const sorted = data.slice().sort((a, b) => a - b);
+    const range = sorted[6] - sorted[0];
+    return {
+      type: 'numeric',
+      prompt: `Find the **range** of: $${data.join(', ')}$`,
+      answer: range, tolerance: 0.001,
+      hint: 'Range = largest value − smallest value.',
+      steps: [
+        `Sorted: $${sorted.join(', ')}$`,
+        `Largest $${sorted[6]}$ minus smallest $${sorted[0]}$ gives $${range}$`
+      ],
+      answerText: `${range}`
+    };
+  },
+
+  simpleProbability() {
+    const colors = [['red', '#c2410c'], ['blue', '#1d4ed8'], ['green', '#15803d']];
+    const chosen = pick(colors)[0];
+    const good = rint(2, 5), others = rint(3, 8);
+    const total = good + others;
+    const f = frac(good, total);
+    return choiceQ(
+      `A bag holds $${good}$ ${chosen} marbles and $${others}$ other marbles. You draw one at random. What is $P(${chosen})$?`,
+      `$${f}$`,
+      [`$${frac(good, others)}$`, `$${frac(others, total)}$`, `$${frac(1, total)}$`, `$${frac(good, total + 1)}$`],
+      {
+        hint: 'Probability = favorable outcomes ÷ total outcomes.',
+        steps: [
+          `Favorable: $${good}$ ${chosen} marbles. Total: $${good} + ${others} = ${total}$.`,
+          `$P(${chosen}) = \\frac{${good}}{${total}} = ${f}$`
+        ]
+      }
+    );
+  },
+
+  independentEvents() {
+    if (Math.random() < 0.5) {
+      const sides = pick([4, 6, 6, 8]);
+      const k = rint(1, Math.min(3, sides - 1));
+      const f = frac(1, sides * sides);
+      return choiceQ(
+        `You roll a fair $${sides}$-sided die twice. What is the probability of rolling $${k}$ both times?`,
+        `$${f}$`,
+        [`$${frac(1, sides)}$`, `$${frac(2, sides * sides)}$`, `$${frac(k, sides * sides)}$`, `$${frac(1, sides * 2)}$`],
+        {
+          hint: 'Independent events: multiply the individual probabilities.',
+          steps: [
+            `Rolling a specific value $${k}$ on one roll has probability $\\frac{1}{${sides}}$.`,
+            `Two independent rolls: $\\frac{1}{${sides}} \\times \\frac{1}{${sides}} = \\frac{1}{${sides * sides}}$`
+          ]
+        }
+      );
+    }
+    return choiceQ(
+      `Two fair coins are flipped. What is the probability of exactly one heads?`,
+      `$\\frac{1}{2}$`,
+      ['$\\frac{1}{4}$', '$\\frac{3}{4}$', '$\\frac{1}{3}$', '$1$'],
+      {
+        hint: 'List all equally likely outcomes: HH, HT, TH, TT.',
+        steps: [
+          `Outcomes: $\\{HH, HT, TH, TT\\}$ — $4$ total, all equally likely.`,
+          `Exactly one heads: $HT$ and $TH$ → $P = \\frac{2}{4} = \\frac{1}{2}$`
+        ]
+      }
+    );
+  },
+
+  countingPrinciple() {
+    const style = rint(1, 3);
+    if (style === 1) {
+      const shirts = rint(3, 6), pants = rint(2, 5);
+      return {
+        type: 'numeric',
+        prompt: `A closet has $${shirts}$ shirts and $${pants}$ pairs of pants. How many different outfits (one shirt + one pair) are possible?`,
+        answer: shirts * pants, tolerance: 0.001,
+        hint: 'Counting principle: multiply the number of choices at each stage.',
+        steps: [`$${shirts} \\times ${pants} = ${shirts * pants}$ outfits`],
+        answerText: `${shirts * pants}`
+      };
+    }
+    if (style === 2) {
+      const n = rint(3, 6);
+      const fact = (x) => (x <= 1 ? 1 : x * fact(x - 1));
+      return {
+        type: 'numeric',
+        prompt: `In how many ways can $${n}$ different books be arranged in a row on a shelf?`,
+        answer: fact(n), tolerance: 0.001,
+        hint: `First position has ${n} choices, the next has ${n - 1}, and so on.`,
+        steps: [`$${n}! = ${n} \\times ${n - 1} \\times \\cdots \\times 1 = ${fact(n)}$`],
+        answerText: `${fact(n)}`
+      };
+    }
+    const n = rint(4, 8);
+    const pairs = (n * (n - 1)) / 2;
+    return {
+      type: 'numeric',
+      prompt: `$${n}$ friends each shake hands with every other friend exactly once. How many handshakes happen?`,
+      answer: pairs, tolerance: 0.001,
+      hint: 'Each handshake uses 2 people: this is "n choose 2".',
+      steps: [
+        `$\\binom{${n}}{2} = \\frac{${n} \\times ${n - 1}}{2} = ${pairs}$`
+      ],
+      answerText: `${pairs}`
+    };
+  },
+
+  expectedValue() {
+    let a = rint(1, 5) * 2, b = rint(1, 5) * 2;
+    while (b === a) b = rint(1, 5) * 2;
+    const p = pick([[1, 2], [1, 4], [3, 4], [1, 3]]);
+    const ev = Math.round((a * p[0] / p[1] + b * (1 - p[0] / p[1])) * 100) / 100;
+    return {
+      type: 'numeric',
+      prompt: `A game pays $${a}$ points with probability $\\frac{${p[0]}}{${p[1]}}$ and $${b}$ points otherwise. What is the expected value per play?`,
+      answer: ev, tolerance: 0.051,
+      hint: 'EV = (value₁ × prob₁) + (value₂ × prob₂).',
+      steps: [
+        `$E = ${a} \\cdot \\frac{${p[0]}}{${p[1]}} + ${b} \\cdot \\frac{${p[1] - p[0]}}{${p[1]}}$`,
+        `$E = ${Math.round(a * p[0] / p[1] * 100) / 100} + ${Math.round(b * (p[1] - p[0]) / p[1] * 100) / 100} = ${ev}$`
+      ],
+      answerText: `${ev} points`
+    };
+  },
+
+  // ---- Macroeconomics ------------------------------------------------------
+
+  inflationRate() {
+    const cpi1 = rint(100, 130), jump = rint(2, 9);
+    const cpi2 = cpi1 + jump;
+    const rate = Math.round(((cpi2 - cpi1) / cpi1) * 1000) / 10;
+    return {
+      type: 'numeric',
+      prompt: `The Consumer Price Index rises from $${cpi1}$ to $${cpi2}$ in one year. What is the inflation rate? (Round to one decimal, answer as a percent.)`,
+      answer: rate, tolerance: 0.15,
+      hint: 'Inflation rate = % change in CPI.',
+      steps: [
+        `$\\text{rate} = \\frac{${cpi2} - ${cpi1}}{${cpi1}} \\times 100$`,
+        `$= \\frac{${jump}}{${cpi1}} \\times 100 = ${rate}\\%$`
+      ],
+      answerText: `${rate}%`
+    };
+  },
+
+  unemploymentRate() {
+    const labor = rint(40, 90) * 10, unemployed = rint(2, 8) * (labor / 100);
+    const rate = Math.round((unemployed / labor) * 1000) / 10;
+    return {
+      type: 'numeric',
+      prompt: `A country has a labor force of $${labor}$ million people, of whom $${unemployed}$ million are unemployed (without a job but actively looking). What is the unemployment rate?`,
+      answer: rate, tolerance: 0.15,
+      hint: 'Unemployment rate = unemployed ÷ labor force × 100. Retirees and students not job-hunting do not count.',
+      steps: [
+        `$u = \\frac{${unemployed}}{${labor}} \\times 100 = ${rate}\\%$`
+      ],
+      answerText: `${rate}%`
+    };
+  },
+
+  // ---- Computing ------------------------------------------------------------
+
+  binaryConvert() {
+    const n = rint(5, 60);
+    const toBinary = Math.random() < 0.5;
+    if (toBinary) {
+      const bits = n.toString(2);
+      const wrongs = [(n + 1).toString(2), (n - 1).toString(2), (n * 2).toString(2), n.toString(2).split('').reverse().join('')];
+      return choiceQ(
+        `Convert the decimal number $${n}$ to binary.`,
+        `$${bits}_2$`,
+        wrongs.map((w) => `$${w}_2$`),
+        {
+          hint: 'Divide by 2 repeatedly and record the remainders, reading bottom-up.',
+          steps: [
+            `${n} ÷ 2 = ${Math.floor(n / 2)} r ${n % 2}; keep halving and collecting remainders.`,
+            `Reading the remainders in reverse gives $${bits}_2$. Check: $${bits}_2 = ${n}$.`
+          ]
+        }
+      );
+    }
+    const bits = n.toString(2);
+    const wrongs = [n + 1, n - 1, n * 2, parseInt(bits.split('').reverse().join(''), 2)].map(String);
+    return choiceQ(
+      `Convert the binary number $${bits}_2$ to decimal.`,
+      `$${n}$`,
+      wrongs.map((w) => `$${w}$`),
+      {
+        hint: 'Each place doubles the previous: 1, 2, 4, 8, 16, …',
+        steps: [
+          `Expand by place value: $${bits}_2 = ${n}$.`
+        ]
+      }
+    );
   }
 };
 
