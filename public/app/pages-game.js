@@ -1,7 +1,8 @@
 // Achievements page — badge shelf + level card.
 
 import { api } from './api.js';
-import { icon, esc, progressRing, crumbs } from './ui.js';
+import { icon } from './icons.js';
+import { esc, progressRing, crumbs } from './ui.js';
 
 export function pageAchievements(d) {
   const li = d.levelInfo;
@@ -16,7 +17,7 @@ export function pageAchievements(d) {
   return `<div class="wrap page">
     ${crumbs([{ label: 'Dashboard', href: '/dashboard' }, { label: 'Achievements' }])}
     <div class="lvl-hero card">
-      <div class="lvl-ring">${progressRing(pct, 96, 9)}<span class="lvl-num">${li?.level ?? 1}</span></div>
+      <div class="lvl-ring">${progressRing(pct / 100, 96, 9)}</div>
       <div>
         <div class="eyebrow">Level ${li?.level ?? 1}</div>
         <h1 style="margin:2px 0 4px">${esc(li?.title || 'Novice')}</h1>
