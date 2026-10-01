@@ -3,6 +3,7 @@ import { esc, toast, go, masteryDot, masteryTag, progressRing, emptyState, crumb
 import { api, state, recordGuestAttempt, guestSkillLevel } from './api.js';
 import { renderBlocks, inlineMd } from './markdown.js';
 import { mountGraphs } from './graph.js';
+import { gameFx, burstAt, celebrateAchievements } from './game.js';
 
 // ---------- catalog -------------------------------------------------------
 
@@ -191,8 +192,9 @@ export async function wireLesson(lessonId, skillId) {
       done.classList.add('done');
       done.className = 'btn btn-outline done';
       done.innerHTML = `${icon('check', 15)} Completed`;
-      if (r.xpAwarded) { toast(`+${r.xpAwarded} XP — lesson complete`, 'xp'); window.dispatchEvent(new Event('lumina:nav-refresh')); }
+      if (r.xpAwarded) { toast(`+${r.xpAwarded} XP — lesson complete`, 'xp'); burstAt(done, 40, 0.7); window.dispatchEvent(new Event('lumina:nav-refresh')); }
       else toast('Marked complete', '');
+      gameFx(r, done);
     } catch (e) {
       toast(e.message || 'Could not save that', '');
     }
@@ -245,6 +247,7 @@ async function mountCheck(skillId) {
       return;
     }
     if (res.guest) recordGuestAttempt(skillId, res.correct);
+    gameFx(res, host.querySelector('#ckFb') || host);
     if (q.type === 'choice') {
       host.querySelectorAll('.choice').forEach((btn) => {
         btn.disabled = true;
@@ -447,6 +450,7 @@ async function submitAnswer(skillId, d, answer) {
     toast(`+${res.progress.xpAwarded} XP`, 'xp');
     window.dispatchEvent(new Event('lumina:nav-refresh'));
   }
+  gameFx(res, fb || host);
   if (res.guest) recordGuestAttempt(skillId, res.correct);
 
   // sidebar
@@ -494,6 +498,7 @@ export async function startChallenge(courseId) {
     return;
   }
   challenge.qs = d.questions;
+  challenge.runId = d.runId || null;
   challenge.unit = d.course.unit ? d.course.unit.index : null;
   const t = document.getElementById('chTitle');
   if (t) t.textContent = d.course.unit ? `${d.course.title} — Unit ${d.course.unit.index + 1} test` : `${d.course.title} — challenge`;
@@ -570,6 +575,7 @@ async function submitChallenge(item, q, answer) {
   }
   challenge.results.push({ skillId: item.skillId, skillName: item.skillName, unit: item.unit, correct: res.correct, level: res.progress?.level });
   challenge.xp += res.progress?.xpAwarded || 0;
+  gameFx(res, host.querySelector('#qFeedback') || host);
   if (res.guest) recordGuestAttempt(item.skillId, res.correct);
 
   if (q.type === 'choice') {
@@ -614,9 +620,17 @@ async function submitChallenge(item, q, answer) {
 
 function renderChallengeResults() {
   const host = document.getElementById('chHost');
+  if (challenge.runId) {
+    api('POST', `/api/courses/${challenge.courseId}/challenge/finish`, { runId: challenge.runId })
+      .then((r) => {
+        celebrateAchievements(r.newAchievements);
+        challenge.runId = null;
+      }).catch(() => {});
+  }
   const total = challenge.results.length;
   const right = challenge.results.filter((r) => r.correct).length;
   const pct = total ? Math.round((right / total) * 100) : 0;
+  if (pct === 100) setTimeout(() => burstAt(null, 160, 1.5), 350);
   const verdict = pct >= 80
     ? 'Solid — you know this material. Keep it fresh with practice.'
     : pct >= 50
@@ -661,11 +675,12 @@ export function pageDashboard(d) {
     <div class="dash-hero mb-4">
       <div style="flex:1;min-width:240px;position:relative;z-index:1">
         <h1>Welcome back, ${esc(first)}</h1>
-        <p class="sub">${streak > 0 ? `${streak}-day streak — keep it alive.` : 'Answer a practice question to start a streak.'} Level ${d.level} · ${d.xpToNext} XP to next.</p>
+        <p class="sub">${streak > 0 ? `${streak}-day streak — keep it alive.` : 'Answer a practice question to start a streak.'} Level ${d.level}${d.levelInfo?.title ? ` — ${esc(d.levelInfo.title)}` : ''} · ${d.xpToNext} XP to next.</p>
         <div class="stat-strip">
           <div class="stat-pill"><span class="num">${d.xp}</span><span class="lbl">XP</span></div>
           <div class="stat-pill"><span class="num">${d.level}</span><span class="lbl">Level</span></div>
           <div class="stat-pill"><span class="num">${icon('flame', 20)} ${streak}</span><span class="lbl">Streak</span></div>
+          <a class="stat-pill stat-link" href="/achievements" data-nav><span class="num">${d.achievements?.earned ?? 0}<span class="stat-dim">/${d.achievements?.total ?? 0}</span></span><span class="lbl">Badges</span></a>
           <div class="stat-pill"><span class="num">${d.bySubject.reduce((n, s) => n + s.mastered, 0)}</span><span class="lbl">Mastered</span></div>
         </div>
       </div>

@@ -67,7 +67,8 @@ export function navHtml() {
       </div>
       ${me ? `
         ${streak > 0 ? `<span class="xp-pill" title="${streak}-day streak">${icon('flame', 13)} ${streak}</span>` : ''}
-        <span class="xp-pill" title="${xp} XP — level ${state.me.level}">${icon('spark', 13)} ${xp} XP</span>
+        <span class="xp-pill" title="${xp} XP — level ${state.me.level} · ${state.me.levelInfo?.title || ''}">${icon('spark', 13)} ${xp} XP</span>
+        ${state.me.levelInfo ? `<a class="xp-pill xp-pill-level" href="/achievements" data-nav title="Level ${state.me.levelInfo.level} — ${esc(state.me.levelInfo.title)} · ${state.me.achievements || 0} achievements">${icon('trophy', 13)} ${state.me.levelInfo.level}</a>` : ''}
         <button class="avatar-btn" id="avatarBtn" aria-label="Account menu">${avatarHtml(me.name, me.avatarSeed, 34)}</button>
       ` : `
         <a class="btn btn-outline btn-sm" href="/login" data-nav>Log in</a>
@@ -79,6 +80,7 @@ export function navHtml() {
     <div class="nav-menu" id="navMenu">
       <div class="menu-head"><strong>${esc(me.name)}</strong><span>${esc(me.email)}</span></div>
       <a href="/dashboard" data-nav>${icon('target', 16)} Dashboard</a>
+      <a href="/achievements" data-nav>${icon('trophy', 16)} Achievements</a>
       <a href="/profile" data-nav>${icon('user', 16)} Profile</a>
       <button id="themeBtn">${icon(document.documentElement.dataset.theme === 'dark' ? 'sun' : 'moon', 16)} ${document.documentElement.dataset.theme === 'dark' ? 'Light mode' : 'Dark mode'}</button>
       <button id="logoutBtn">${icon('logout', 16)} Sign out</button>
@@ -100,6 +102,7 @@ export function footerHtml() {
           <a href="/subjects" data-nav>All subjects</a>
           <a href="/coach" data-nav>Coach</a>
           <a href="/help" data-nav>Homework help</a>
+          <a href="/achievements" data-nav>Achievements</a>
         </div>
         <div>
           <h5>Company</h5>
@@ -177,7 +180,7 @@ export function toast(msg, kind = '') {
   }
   const el = document.createElement('div');
   el.className = `toast ${kind}`;
-  el.innerHTML = `${kind === 'xp' ? icon('spark', 15) : ''}${esc(msg)}`;
+  el.innerHTML = `${kind === 'xp' ? icon('spark', 15) : kind === 'badge' ? icon('trophy', 15) : ''}${esc(msg)}`;
   toastHost.appendChild(el);
   setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .4s'; setTimeout(() => el.remove(), 400); }, 3400);
 }

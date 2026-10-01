@@ -3,6 +3,7 @@ import { navHtml, footerHtml, wireNav, go, _setNav, skeletons } from './ui.js';
 import { pageLanding, wireLanding, pageAbout, pageFaq, pageTerms, pagePrivacy, pageNotFound } from './pages-marketing.js';
 import { pageAuth, wireAuth, pageProfile, wireProfile } from './pages-auth.js';
 import { pageSubjects, pageSubject, pageCourse, pageLesson, wireLesson, pagePractice, loadQuestion, pageDashboard, pageChallenge, startChallenge } from './pages-learn.js';
+import { pageAchievements, fetchAchievements } from './pages-game.js';
 import { pageHelp, wireHelp, pageThread, wireThread, pageAsk, wireAsk, pageCoach, wireCoach, pageSearch } from './pages-help.js';
 
 const app = document.getElementById('app');
@@ -100,6 +101,9 @@ async function route() {
       const q = params.q || '';
       const results = q ? await api('GET', `/api/search?q=${encodeURIComponent(q)}`) : { lessons: [], courses: [], questions: [] };
       page = pageSearch(q, results); title = `Search · Lumina`;
+    } else if (path === '/achievements') {
+      if (!state.me?.user) { go('/login'); return; }
+      page = pageAchievements(await fetchAchievements()); title = 'Achievements · Lumina';
     } else if (path === '/profile') {
       if (!state.me?.user) { go('/login'); return; }
       page = pageProfile(); wire = () => wireProfile(renderNav);
