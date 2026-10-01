@@ -2,6 +2,7 @@ import { icon } from './icons.js';
 import { esc, toast, go, timeAgo, avatarHtml, emptyState, skeletons } from './ui.js';
 import { api, state } from './api.js';
 import { inlineMd, md } from './markdown.js';
+import { celebrateAchievements } from './game.js';
 
 // ---------- board ------------------------------------------------------------
 
@@ -179,8 +180,9 @@ export async function wireThread(id) {
   if (post) post.onclick = async () => {
     const body = document.getElementById('answerBody').value;
     try {
-      await api('POST', `/api/questions/${id}/answers`, { body });
+      const r = await api('POST', `/api/questions/${id}/answers`, { body });
       toast('+15 XP — answer posted', 'xp');
+      celebrateAchievements(r.newAchievements);
       wireThread(id);
     } catch (e) {
       document.getElementById('ansErr').innerHTML = `<div class="form-error mt-2">${esc(e.message)}</div>`;
@@ -245,6 +247,7 @@ export function wireAsk(subjects) {
         tags
       });
       toast('Question posted');
+      celebrateAchievements(r.newAchievements);
       go(`/help/${r.id}`);
     } catch (e) {
       err.innerHTML = `<div class="form-error">${esc(e.message)}</div>`;

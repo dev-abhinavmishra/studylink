@@ -7,6 +7,7 @@ const { subjects, skillIndex, lessonIndex, courseIndex, courseStats, catalogSumm
 const { generate } = require('../content/generators');
 const coach = require('./coach');
 const qaSeed = require('../content/qa');
+const { ACHIEVEMENTS, levelInfo, checkAchievements, achievementShelf } = require('./game');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -73,6 +74,21 @@ function streakDays(userId) {
 function totalXp(userId) {
   const r = db.prepare('SELECT COALESCE(SUM(xp),0) AS xp FROM activity_days WHERE user_id = ?').get(userId);
   return r.xp;
+}
+
+// courseId -> lesson ids (for the course-graduate achievement)
+const courseLessonIds = new Map();
+for (const s of subjects) for (const c of s.courses) {
+  courseLessonIds.set(c.id, c.units.flatMap((u) => u.lessons.map((l) => l.id)));
+}
+
+// Run the badge shelf after any progress-changing action. Returns specs of
+// achievements earned by THIS call so clients can toast + confetti them.
+function gameCheck(uid) {
+  if (!uid) return [];
+  try {
+    return checkAchievements(db, uid, { xp: totalXp(uid), streak: streakDays(uid), courseLessonIds });
+  } catch { return []; }
 }
 
 function levelFromXp(xp) {
@@ -179,7 +195,21 @@ app.get('/api/me', (req, res) => {
     user: publicUser(u),
     xp,
     level: levelFromXp(xp),
+    levelInfo: levelInfo(xp),
+    achievements: db.prepare('SELECT COUNT(*) n FROM achievements WHERE user_id = ?').get(u.id).n,
     streakDays: streakDays(u.id)
+  });
+});
+
+// ---------- achievements ---------------------------------------------------
+
+app.get('/api/achievements', requireAuth, (req, res) => {
+  const shelf = achievementShelf(db, req.session.userId);
+  res.json({
+    total: shelf.length,
+    earned: shelf.filter((a) => a.earnedAt).length,
+    levelInfo: levelInfo(totalXp(req.session.userId)),
+    achievements: shelf
   });
 });
 
@@ -353,9 +383,16 @@ app.post('/api/skills/:id/answer', (req, res) => {
     db.prepare('INSERT INTO attempts (user_id, skill_id, lesson_id, correct, xp) VALUES (?,?,?,?,?)')
       .run(uid, hit.skill.id, req.body.lessonId || hit.lesson.id, correct ? 1 : 0, xpAwarded);
     if (xpAwarded) awardXp(uid, xpAwarded);
+    if (stored.challengeRunId) {
+      db.prepare('UPDATE challenge_runs SET total = total + 1, correct = correct + ? WHERE id = ? AND user_id = ?')
+        .run(correct ? 1 : 0, stored.challengeRunId, uid);
+    }
+    const xp = totalXp(uid);
     progress = {
       level, attempts, correct: correctCt, streak,
-      xpAwarded, levelUp: LEVELS.indexOf(level) > LEVELS.indexOf(prevLevel)
+      xpAwarded, levelUp: LEVELS.indexOf(level) > LEVELS.indexOf(prevLevel),
+      levelInfo: levelInfo(xp),
+      newAchievements: gameCheck(uid)
     };
   }
   res.json({
@@ -388,6 +425,12 @@ app.get('/api/courses/:id/challenge', (req, res) => {
     const j = Math.floor(Math.random() * (i + 1));
     [pool[i], pool[j]] = [pool[j], pool[i]];
   }
+  // Signed-in challengers get a tracked run — the answer endpoint tallies it
+  // server-side, and finishing it awards the challenge badges.
+  const uid = req.session.userId;
+  const runId = uid
+    ? db.prepare('INSERT INTO challenge_runs (user_id, course_id, unit) VALUES (?,?,?)').run(uid, hit.course.id, unitIdx).lastInsertRowid
+    : null;
   const questions = pool.slice(0, Math.min(10, pool.length)).map((p) => {
     const q = questionPayload({ skill: p.skill });
     if (!q) return null;
@@ -395,7 +438,7 @@ app.get('/api/courses/:id/challenge', (req, res) => {
     sessionQ.set(qid, {
       answer: q.answer, tolerance: q.tolerance || 0, normalize: q.normalize,
       steps: q.steps || [], answerText: q.answerText || String(q.answer),
-      skillId: p.skill.id, expires: Date.now() + 30 * 60 * 1000
+      skillId: p.skill.id, challengeRunId: runId, expires: Date.now() + 30 * 60 * 1000
     });
     return {
       qid, skillId: p.skill.id, skillName: p.skill.name, unit: p.unit.title,
@@ -408,7 +451,18 @@ app.get('/api/courses/:id/challenge', (req, res) => {
       unit: unitIdx != null ? { index: unitIdx, title: units[0]?.title } : null
     },
     count: questions.length,
+    runId,
     questions
+  });
+});
+
+app.post('/api/courses/:id/challenge/finish', requireAuth, (req, res) => {
+  const run = db.prepare('SELECT * FROM challenge_runs WHERE id = ? AND user_id = ?').get(req.body.runId, req.session.userId);
+  if (!run || run.course_id !== req.params.id) return res.status(404).json({ error: 'Challenge run not found' });
+  db.prepare('UPDATE challenge_runs SET finished_at = datetime(\'now\') WHERE id = ?').run(run.id);
+  res.json({
+    run: { total: run.total, correct: run.correct },
+    newAchievements: gameCheck(req.session.userId)
   });
 });
 
@@ -433,7 +487,7 @@ app.post('/api/lessons/:id/complete', (req, res) => {
     .run(uid, req.params.id);
   const xpAwarded = wasDone?.completed ? 0 : 5; // completing a lesson pays once
   if (xpAwarded) awardXp(uid, xpAwarded);
-  res.json({ ok: true, xpAwarded });
+  res.json({ ok: true, xpAwarded, levelInfo: levelInfo(totalXp(uid)), newAchievements: gameCheck(uid) });
 });
 
 app.post('/api/lessons/:id/bookmark', requireAuth, (req, res) => {
@@ -604,8 +658,12 @@ app.get('/api/dashboard', requireAuth, (req, res) => {
 
   res.json({
     user: publicUser(u),
-    xp, level: levelFromXp(xp), streakDays: streakDays(uid),
+    xp, level: levelFromXp(xp), levelInfo: levelInfo(xp), streakDays: streakDays(uid),
     xpToNext: (levelFromXp(xp) * (levelFromXp(xp) + 1) * 50) - xp,
+    achievements: {
+      earned: db.prepare('SELECT COUNT(*) n FROM achievements WHERE user_id = ?').get(uid).n,
+      total: ACHIEVEMENTS.length
+    },
     continueLearning, bySubject, recentAttempts, weekly, upNext, bookmarks,
     today, suggested
   });
@@ -683,7 +741,7 @@ app.post('/api/questions', requireAuth, (req, res) => {
   const u = db.prepare('SELECT name FROM users WHERE id = ?').get(req.session.userId);
   const info = db.prepare('INSERT INTO questions (user_id, author_name, title, body, subject_id, tags) VALUES (?,?,?,?,?,?)')
     .run(req.session.userId, u.name, title.trim(), body.trim(), subjectId, JSON.stringify((tags || []).slice(0, 5)));
-  res.json({ id: info.lastInsertRowid });
+  res.json({ id: info.lastInsertRowid, newAchievements: gameCheck(req.session.userId) });
 });
 
 app.post('/api/questions/:id/answers', requireAuth, (req, res) => {
@@ -695,7 +753,7 @@ app.post('/api/questions/:id/answers', requireAuth, (req, res) => {
   const info = db.prepare('INSERT INTO answers (question_id, user_id, author_name, body) VALUES (?,?,?,?)')
     .run(q.id, req.session.userId, u.name, body.trim());
   awardXp(req.session.userId, 15);
-  res.json({ id: info.lastInsertRowid });
+  res.json({ id: info.lastInsertRowid, newAchievements: gameCheck(req.session.userId) });
 });
 
 app.post('/api/questions/:id/accept', requireAuth, (req, res) => {
@@ -706,6 +764,7 @@ app.post('/api/questions/:id/accept', requireAuth, (req, res) => {
   const a = db.prepare('SELECT * FROM answers WHERE id = ? AND question_id = ?').get(answerId, q.id);
   if (!a) return res.status(404).json({ error: 'Answer not found' });
   db.prepare('UPDATE questions SET accepted_answer_id = ? WHERE id = ?').run(a.id, q.id);
+  if (a.user_id && a.user_id !== req.session.userId) gameCheck(a.user_id); // "Verified brain" for the answer author
   res.json({ ok: true });
 });
 
